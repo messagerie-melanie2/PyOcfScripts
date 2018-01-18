@@ -91,15 +91,34 @@ class ocfChangeRoute(ocfScript):
     ########################################
     def __init__(self):
         try:
-            super(ocfChangeRoute, self).__init__('ocfChangeRoute', 'This is the ocf script to manage any daemon', 'manage any daemon.', None, None, \
-                binfile_is_ra_opt=False, pidfile_is_ra_opt=False, piddir_owner_is_ra_opt=False,  piddir_group_is_ra_opt=False,  piddir_mod_is_ra_opt=False, \
-                binfileoptions_is_ra_opt=False, maxnbprocess_is_ra_opt=False, \
-                commande_line_searched_is_ra_opt=False, fixdirs_is_ra_opt=False, \
-                default_kill3=False, kill3_is_ra_opt=False, kill9_is_ra_opt=False, \
-                default_ocf_write_pidfile=False, ocf_write_pidfile_is_ra_opt=False, \
-                default_monitor_clean_dirty_pidfile=False, monitor_clean_dirty_pidfile_is_ra_opt=False, \
-                default_sleepafterstart=1, default_sleepafterstop=1, starttimeoutratio_is_ra_opt=False, \
-                start_force_stop_timeout_is_ra_opt=False, process_file_ulimit_is_ra_opt=False, status_check_ppid_is_ra_opt=False, status_check_pidfile_is_ra_opt=False)
+            super(ocfChangeRoute, self).__init__('ocfChangeRoute', \
+                'This is the ocf script to manage any daemon', \
+                'manage any daemon.', \
+                None, \
+                None, \
+                binfile_is_ra_opt=False, \
+                pidfile_is_ra_opt=False, \
+                piddir_owner_is_ra_opt=False, \
+                piddir_group_is_ra_opt=False,  \
+                piddir_mod_is_ra_opt=False, \
+                binfileoptions_is_ra_opt=False, \
+                maxnbprocess_is_ra_opt=False, \
+                commande_line_searched_is_ra_opt=False, \
+                fixdirs_is_ra_opt=False, \
+                default_kill3=False, \
+                kill3_is_ra_opt=False, \
+                kill9_is_ra_opt=False, \
+                default_ocf_write_pidfile=False, \
+                ocf_write_pidfile_is_ra_opt=False, \
+                default_monitor_clean_dirty_pidfile=False, \
+                monitor_clean_dirty_pidfile_is_ra_opt=False, \
+                default_sleepafterstart=1, \
+                default_sleepafterstop=1, \
+                starttimeoutratio_is_ra_opt=False, \
+                start_force_stop_timeout_is_ra_opt=False, \
+                process_file_ulimit_is_ra_opt=False, \
+                status_check_ppid_is_ra_opt=False, \
+                status_check_pidfile_is_ra_opt=False)
         except:
             raise
         
@@ -112,7 +131,7 @@ class ocfChangeRoute(ocfScript):
             'MODIFY': ocfRoutesAction('MODIFY', function4start=self.modify_route), \
             'RESTORE': ocfRoutesAction('RESTORE', function4stop=self.modify_route)
             }
-        self.ipdb = IPDB()
+        self.ipdb = IPDB(mode='implicit')
 
     ########################################
     def __del__(self):
@@ -123,7 +142,7 @@ class ocfChangeRoute(ocfScript):
         try: 
             self.ipdb.commit()
             self.ipdb.release()
-            self.ipdb = IPDB()
+            self.ipdb = IPDB(mode='implicit')
         except:
             raise
     
@@ -147,6 +166,7 @@ class ocfChangeRoute(ocfScript):
             confparser.read(self.get_option('configfile'))
             
             self.actions_order_start = confparser.get('DEFAULT', 'startorder', fallback='ADD,DEL,MODIFY').rstrip(',').split(',')
+            self.clean_on_error = confparser.getboolean('DEFAULT', 'cleanonerror', fallback=True)
             if not set(self.actions4routes) >= set(self.actions_order_start):
                 msg = 'ocfChangeRoute.initialize: actions_order_start, forbiden action in {}'.format(self.actions_order_start)
                 self.ocf_log(msg, msglevel=0)
@@ -216,42 +236,73 @@ class ocfChangeRoute(ocfScript):
             except configparser.NoSectionError:
                 self.ocf_log('ocfChangeRoute.read_configfile_rules_block: no route for {}'.format(block), msglevel=5)
                 break
-            except Exception as err:
-                self.ocf_log('ocfChangeRoute.read_configfile_rules_block: Error during file parsing: {}'.format(err), msglevel=0)
+            except Exception:
+                self.ocf_log('ocfChangeRoute.read_configfile_rules_block: Error during file parsing: {}'.format(sys.exc_info()), msglevel=0)
                 raise
         
     ########################################
     def add_route(self, adddict):
         self.ocf_log('ocfChangeRoute.add_route: adding route {}'.format(adddict), msglevel=5)
         try:
-            self.ipdb.routes.add(adddict)
-        except Exception as err: 
-            self.ocf_log('ocfChangeRoute.add_route Error: {}'.format(err), msglevel=0)
+            if adddict['dst'] not in self.ipdb.routes:
+                self.ipdb.routes.add(adddict)
+            else:
+                self.ocf_log_warn('ocfChangeRoute.add_route: route {} must be added but already exists'.format(adddict))
+        except Exception: 
+            self.ocf_log('ocfChangeRoute.add_route Error: {}'.format(sys.exc_info()), msglevel=0)
             raise
         
     ########################################
     def del_route(self, deldict):
         self.ocf_log('ocfChangeRoute.del_route: deleting route {}'.format(deldict), msglevel=5)
         try:
-            self.ipdb.routes.remove(deldict['dst'])
-        except Exception as err: 
-            self.ocf_log('ocfChangeRoute.del_route Error: {}'.format(err), msglevel=0)
+            if deldict['dst'] in self.ipdb.routes:
+                self.ipdb.routes.remove(deldict['dst'])
+            else:
+                self.ocf_log_warn('ocfChangeRoute.del_route: route {} must be deleted but does not exist.'.format(deldict['dst']))
+        except Exception: 
+            self.ocf_log('ocfChangeRoute.del_route Error: {}'.format(sys.exc_info()), msglevel=0)
             raise
     
     ########################################
+    #def modify_route(self, modifydict, mode_restore=False):
     def modify_route(self, modifydict):
         self.ocf_log('ocfChangeRoute.modify_route: modifying route {}'.format(modifydict), msglevel=5)
         try:
-            for x in modifydict:
-                self.ipdb.routes[modifydict['dst']][x] = modifydict[x]
-        except Exception as err: 
-            self.ocf_log('ocfChangeRoute.modify_route Error: {}'.format(err), msglevel=0)
+            if modifydict['dst'] in self.ipdb.routes:
+                for x in modifydict:
+                    self.ipdb.routes[modifydict['dst']][x] = modifydict[x]
+            else:
+                 self.ocf_log_warn('ocfChangeRoute.modify_route: route {} must be modified but does not exist. Adding missing rule.'.format(modifydict['dst']))
+                 self.add_route(modifydict)
+        except Exception: 
+            self.ocf_log('ocfChangeRoute.modify_route Error: {}'.format(sys.exc_info()), msglevel=0)
             raise
-     
-     ########################################
+
+    ########################################
+    #def restore_route(self, restoredict):
+        #self.ocf_log('ocfChangeRoute.restore_route: restoring route {}'.format(restoredict), msglevel=5)
+        #self.modify_route(restoredict, mode_restore=True)
+
+    ########################################
     def list_routesdict(self, action):
         for x in self.actions4routes[action].routesdesc:
             yield x
+
+    ########################################
+    def clean_rules_on_error(self):
+        self.ocf_log('ocfChangeRoute.clean_rules_on_error', msglevel=5)
+        for action in self.actions_order_stop:
+            self.ocf_log('ocfChangeRoute.clean_rules_on_error: Treatment of {}'.format(action), msglevel=5)
+            for routedef in self.get_routes(action):
+                self.ocf_log('ocfChangeRoute.clean_rules_on_error: Treatment of {}, routedef {}'.format(action, routedef), msglevel=5)
+                try:
+                    self.actions4routes[action].function4stop(routedef)
+                    self.ocf_log('ocfChangeRoute.clean_rules_on_error: commiting routes change', msglevel=5)
+                    self.ipdb_commit_and_reload()
+                except:
+                    self.ocf_log('ocfChangeRoute.clean_rules_on_error: error during cleaning route: {}'.format(sys.exc_info()), msglevel=5)
+                    pass
 
     ########################################
     def routes_status(self, action):
@@ -293,8 +344,8 @@ class ocfChangeRoute(ocfScript):
                     return self.ocfretcodes['OCF_NOT_RUNNING']
                 else:
                     return self.ocfretcodes['OCF_ERR_GENERIC']
-        except Exception as err:
-            self.ocf_log('ocfChangeRoute.routes_status: {}'.format(err))
+        except Exception:
+            self.ocf_log('ocfChangeRoute.routes_status: {}'.format(sys.exc_info()))
             raise
         
 
@@ -313,6 +364,12 @@ class ocfChangeRoute(ocfScript):
                 restore_ret in [self.ocfretcodes['OCF_SUCCESS'], self.ocfretcodes['OCF_ERR_UNIMPLEMENTED']]:
                 self.ocf_log('ocfChangeRoute.status: routes are stopped', msglevel=5)
                 return self.ocfretcodes['OCF_NOT_RUNNING']
+            elif add_ret in [self.ocfretcodes['OCF_NOT_RUNNING'], self.ocfretcodes['OCF_ERR_UNIMPLEMENTED']] and \
+                del_ret in [self.ocfretcodes['OCF_SUCCESS'], self.ocfretcodes['OCF_ERR_UNIMPLEMENTED']] and \
+                modidy_ret in [self.ocfretcodes['OCF_NOT_RUNNING'], self.ocfretcodes['OCF_ERR_UNIMPLEMENTED']] and \
+                restore_ret in [self.ocfretcodes['OCF_NOT_RUNNING'], self.ocfretcodes['OCF_ERR_UNIMPLEMENTED']]:
+                self.ocf_log('ocfChangeRoute.status: routes are stopped (monitor after boot ?)', msglevel=5)
+                return self.ocfretcodes['OCF_NOT_RUNNING']
             elif add_ret in [self.ocfretcodes['OCF_SUCCESS'], self.ocfretcodes['OCF_ERR_UNIMPLEMENTED']] and \
                 del_ret in [self.ocfretcodes['OCF_NOT_RUNNING'], self.ocfretcodes['OCF_ERR_UNIMPLEMENTED']] and \
                 modidy_ret in [self.ocfretcodes['OCF_SUCCESS'], self.ocfretcodes['OCF_ERR_UNIMPLEMENTED']] and \
@@ -322,7 +379,7 @@ class ocfChangeRoute(ocfScript):
             else:
                 self.ocf_log('ocfChangeRoute.status: routes error add={}, del={}, modify={}, restore={}'.format(add_ret, del_ret, modidy_ret, restore_ret), msglevel=4)
                 return self.ocfretcodes['OCF_ERR_GENERIC']
-        except Exception as err:
+        except Exception:
             raise
 
     ########################################
@@ -331,8 +388,8 @@ class ocfChangeRoute(ocfScript):
         try:
             self.initialize()
             return self.status()
-        except Exception as err:
-            self.ocf_log('ocfChangeRoute.monitor: error during monitor: {}'.format(err))
+        except Exception:
+            self.ocf_log('ocfChangeRoute.monitor: error during monitor: {}'.format(sys.exc_info()))
             return self.ocfretcodes['OCF_ERR_GENERIC']
     
     ########################################
@@ -353,9 +410,13 @@ class ocfChangeRoute(ocfScript):
             status = self.status()
             if status == self.ocfretcodes['OCF_NOT_RUNNING'] or status == self.ocfretcodes['OCF_ERR_GENERIC']:
                 self.ocf_log('ocfChangeRoute.start: can not start new routes')
+                if self.clean_on_error:
+                    self.clean_rules_on_error()
                 return status
-        except Exception as err:
-            self.ocf_log('ocfChangeRoute.start: error during start: {}'.format(err))
+        except Exception:
+            self.ocf_log('ocfChangeRoute.start: error during start: {}'.format(sys.exc_info()))
+            if self.clean_on_error:
+                    self.clean_rules_on_error()
             return self.ocfretcodes['OCF_ERR_GENERIC']
         else:
             self.ocf_log('ocfChangeRoute.start: start sucessfully')
@@ -380,9 +441,13 @@ class ocfChangeRoute(ocfScript):
             status = self.status()
             if status == self.ocfretcodes['OCF_SUCCESS'] or status == self.ocfretcodes['OCF_ERR_GENERIC']:
                 self.ocf_log('ocfChangeRoute.stop: can not stop routes')
+                if self.clean_on_error:
+                    self.clean_rules_on_error()
                 return status
-        except Exception as err:
-            self.ocf_log('ocfChangeRoute.stop: error during stop: {}'.format(err))
+        except Exception:
+            self.ocf_log('ocfChangeRoute.stop: error during stop: {}'.format(sys.exc_info()))
+            if self.clean_on_error:
+                    self.clean_rules_on_error()
             return self.ocfretcodes['OCF_ERR_GENERIC']
         else:
             self.ocf_log('ocfChangeRoute.stop: stop sucessfully')

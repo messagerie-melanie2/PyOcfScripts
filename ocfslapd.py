@@ -34,36 +34,48 @@ class ocfSlapd(ocfScript):
     ########################################
     def __init__(self):
         try:
-            super(ocfSlapd, self).__init__('ocfSlapd', 'This is the ocf script to manage openldap daemon named slapd', 'manage slapd daemon.', \
-                '/usr/sbin/slapd', None,\
-                binfilesd='Full name of the slapd binary to be executed.', binfileld='The full name of the slapd binary to be executed.', \
-                binfileoptionssd='other start options for slapd', binfileoptionsld='other start options for slapd', \
-                pidfile_is_ra_opt=False, maxnbprocess_is_ra_opt=False, \
-                piddir_owner_is_ra_opt=False, piddir_group_is_ra_opt=False, piddir_mod_is_ra_opt=False, \
+            super(ocfSlapd, self).__init__('ocfSlapd', \
+                'This is the ocf script to manage openldap daemon named slapd', \
+                'manage slapd daemon.', \
+                '/usr/sbin/slapd', \
+                None,\
+                binfilesd='Full name of the slapd binary to be executed.', \
+                binfileld='The full name of the slapd binary to be executed.', \
+                binfileoptionssd='other start options for slapd', \
+                binfileoptionsld='other start options for slapd', \
+                pidfile_is_ra_opt=False, \
+                maxnbprocess_is_ra_opt=False, \
+                piddir_owner_is_ra_opt=False, \
+                piddir_group_is_ra_opt=False, \
+                piddir_mod_is_ra_opt=False, \
                 commande_line_searched_is_ra_opt=False, \
-                msfileld='file that active/unactivate slapd is in master or slave mode\n/var/run/heartbeat/slapd.master could be a good choice.', msfile_is_ra_opt=True, \
-                default_sleepafterstart=10, sleepafterstartld='sleep time before the first monitoring after the process start.\nWarning : 5 seconds seems to be too short for a restart with a stop with a SIGQUIT', \
+                msfileld='file that active/unactivate slapd is in master or slave mode\n/var/run/heartbeat/slapd.master could be a good choice.', \
+                msfile_is_ra_opt=True, \
+                default_sleepafterstart=10, \
+                sleepafterstartld='sleep time before the first monitoring after the process start.\nWarning : 5 seconds seems to be too short for a restart with a stop with a SIGQUIT', \
                 default_starttimeoutratio=0.95, \
                 default_ocf_write_pidfile=False, \
                 default_start_force_stop_timeout=15, \
-                default_process_file_ulimit=10000, process_file_ulimitsd='ulimit open file for slapd', process_file_ulimitld='ulimit open file for slapd. minimum is 1024.', \
+                default_process_file_ulimit=10000, \
+                process_file_ulimitsd='ulimit open file for slapd', \
+                process_file_ulimitld='ulimit open file for slapd. minimum is 1024.', \
                 autoaction=False)
         except:
             raise
         else:
-            self.add_runoption ('start', self.start, timeout='300s')
-            self.add_runoption ('stop', self.stop, timeout='300s')
-            self.add_runoption ('restart', self.restart, timeout='600s')
-            self.add_runoption ('promote', self.promote, timeout='20s')
-            self.add_runoption ('demote', self.demote, timeout='300s')
-            self.add_runoption ('meta-data', self.meta, timeout='5s')
-            self.add_runoption ('metadata', self.meta, timeout='5s')
-            self.add_runoption ('meta_data', self.meta, timeout='5s')
-            self.add_runoption ('monitor', self.monitor, timeout='20s', interval=10, depth=0, role='Slave')
-            self.add_runoption ('monitor', self.monitor, timeout='19s', interval=10, depth=0, role='Master')
-            self.add_runoption ('monitor', self.monitor, timeout='19s', interval=10, depth=0)
-            self.add_runoption ('notify', self.notify, timeout='20s')
-            self.add_runoption ('validate-all', self.validate, timeout='5s')
+            self.add_runoption ('start', self.start, timeout=300)
+            self.add_runoption ('stop', self.stop, timeout=300)
+            self.add_runoption ('restart', self.restart, timeout=600)
+            self.add_runoption ('promote', self.promote, timeout=20)
+            self.add_runoption ('demote', self.demote, timeout=300)
+            self.add_runoption ('meta-data', self.meta, timeout=5)
+            self.add_runoption ('metadata', self.meta, timeout=5)
+            self.add_runoption ('meta_data', self.meta, timeout=5)
+            self.add_runoption ('monitor', self.monitor, timeout=20, interval=10, depth=0, role='Slave')
+            self.add_runoption ('monitor', self.monitor, timeout=19, interval=10, depth=0, role='Master')
+            self.add_runoption ('monitor', self.monitor, timeout=19, interval=10, depth=0)
+            self.add_runoption ('notify', self.notify, timeout=20)
+            self.add_runoption ('validate-all', self.validate, timeout=5)
         
         #self.suspend_adv_mon_types = ['none', 'search', 'replic', 'all']
         
@@ -589,7 +601,7 @@ class ocfSlapd(ocfScript):
         sret = super(ocfSlapd, self).status_start(clean_dirty_pidfile=clean_dirty_pidfile)
         if (sret == self.ocfretcodes['OCF_SUCCESS'] or sret == self.ocfretcodes['OCF_RUNNING_MASTER']) and self.get_option('start_ldaprequest'):
             try:
-                ipjs = self.is_process_just_start(self.get_option('startlr_end'))
+                ipjs = self.is_process_just_start(self.get_option('startlr_end'), check_ppid=self.get_option('status_check_ppid_for_start'))
             except:
                 return self.status_error('ocfSlapd.status_start, error when verifing process launch time.')
             

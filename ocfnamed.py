@@ -34,17 +34,21 @@ class ocfNamed(ocfScript):
     ########################################
     def __init__(self):
         try:
-            super(ocfNamed, self).__init__('ocfNamed', 'This is the ocf script to manage dns daemon named', 'manage named daemon.', \
+            super(ocfNamed, self).__init__('ocfNamed', \
+                'This is the ocf script to manage dns daemon named', \
+                'Manage named daemon.', \
                 '/usr/sbin/named', '/var/run/named/named.pid',\
-                binfilesd='Full name of the named binary to be executed.', binfileld='The full name of the named binary to be executed.', \
+                binfilesd='Full name of the named binary to be executed.', \
+                binfileld='The full name of the named binary to be executed.', \
                 binfileoptionssd='other start options for named', binfileoptionsld='other start options for named', \
                 default_piddir_owner='root', \
                 default_piddir_group='bind', \
                 default_piddir_mod='775', \
                 maxnbprocess_is_ra_opt=False, \
                 commande_line_searched_is_ra_opt=False, \
-                msfileld='file that active/unactivate named is in master or slave mode\n/var/run/heartbeat/named.master could be a good choice.', msfile_is_ra_opt=True, \
-                default_sleepafterstart=10, sleepafterstartld='sleep time befor the first monitoring after the start of process.', \
+                msfileld='File that active/unactivate named is in master or slave mode\n/var/run/heartbeat/named.master could be a good choice.', \
+                msfile_is_ra_opt=True, \
+                default_sleepafterstart=10, sleepafterstartld='Sleep time befor the first monitoring after the start of process.', \
                 default_starttimeoutratio=0.95, \
                 default_ocf_write_pidfile=False, \
                 default_start_force_stop_timeout=15, \

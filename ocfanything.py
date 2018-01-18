@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 '''
-Ces fichiers PyOcfScripts ont été édéveloppés pour réaliser des scripts ocf pour pacemaker
+Ces fichiers PyOcfScripts ont été développés pour réaliser des scripts ocf pour pacemaker
 
 PyOcfScripts Copyright © 2017  PNE Annuaire et Messagerie/MEDDE
 
@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
 
 """
-ocfNamed script corosync python
+ocfAnything script corosync python
 nécessite l'installation du module python-psutil
 """
 
@@ -34,9 +34,17 @@ class ocfAnything(ocfScript):
     ########################################
     def __init__(self):
         try:
-            super(ocfAnything, self).__init__('ocfAnything', 'This is the ocf script to manage any daemon', 'manage any daemon.', None, None, \
-                pidfile_is_required=1, ocf_write_pidfile_is_ra_opt=True, \
-                user_cmd_is_ra_opt=True, change_workdir_is_ra_opt=True, status_check_ppid_is_ra_opt=True, status_check_pidfile_is_ra_opt=True)
+            super(ocfAnything, self).__init__('ocfAnything', \
+                'This is the ocf script to manage any daemon', \
+                'manage any daemon.', \
+                None, \
+                None, \
+                pidfile_is_required=1, \
+                ocf_write_pidfile_is_ra_opt=True, \
+                user_cmd_is_ra_opt=True, \
+                change_workdir_is_ra_opt=True, \
+                status_check_ppid_is_ra_opt=True, \
+                status_check_pidfile_is_ra_opt=True)
         except:
             raise
         

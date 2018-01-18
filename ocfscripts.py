@@ -168,40 +168,223 @@ class ocfScript(ocfReturnCodes):
     This class is meta/generic class for ocfScript. It must be inheritate by another class
     '''
     ########################################
-    def __init__(self, resname, longdesc, shortdesc, default_binfile, default_pidfile, version='1.0', ldlang='en', sdlang='en', \
-        autoaction=True, logfacility=syslog.LOG_DAEMON, \
-        binfilesd='binary file to be executed', binfileld='binary file to be executed', binfile_is_ra_opt=True, binfile_is_required=0, binfile_is_unique=0, \
-        pidfilesd='Path to the pid file', pidfileld='Path to the pid file', pidfile_is_ra_opt=True, pidfile_is_required=0, pidfile_is_unique=0, \
-        default_piddir_owner='root', piddir_ownersd='owner of pidfile directory', piddir_ownerld='owner of pidfile directory', piddir_owner_is_ra_opt=True, piddir_owner_is_required=0, piddir_owner_is_unique=0, \
-        default_piddir_group='root', piddir_groupsd='group of pidfile directory', piddir_groupld='group of pidfile directory', piddir_group_is_ra_opt=True, piddir_group_is_required=0, piddir_group_is_unique=0, \
-        default_piddir_mod='755', piddir_modsd='premission of pidfile directory', piddir_modld='premission of pidfile directory', piddir_mod_is_ra_opt=True, piddir_mod_is_required=0, piddir_mod_is_unique=0, \
-        default_binfileoptions=None, binfileoptionssd='start options for binfile', binfileoptionsld='start options for binfile', binfileoptions_is_ra_opt=True, binfileoption_is_required=0, binfileoption_is_unique=0, \
-        default_maxnbprocess=1, maxnbprocsd='Maximum number of process depending of init', maxnbprocld='Maximum number of process depending of init', maxnbprocess_is_ra_opt=True, maxnbprocess_is_required=0, maxnbprocess_is_unique=0, \
-        default_commande_line_searched=None, commande_line_searchedsd='Command line searched', commande_line_searchedld='Command line has searched if the one stored in the /proc directory of the process does not match the one stored in binfile (this difference is visible with a grep).', commande_line_searched_is_ra_opt=True, commande_line_searched_is_required=0, commande_line_searched_is_unique=0, \
-        default_msfile=None, msfilesd='file for master or slave mode', msfileld='file for master or slave mode', msfile_is_ra_opt=False, msfile_is_required=0, msfile_is_unique=0, \
-        default_fixdirs=None, fixdirssd='fixing perms for dirs specified in the list', fixdirsld='fixing perms for dirs specified in the list. create dirs if dones not exist.\nThe format is :\nfixdirs=LIST_DIRS\nLIST_DIRS=DIR_CONF;DIR_CONF;...\nDIR_CONF=dir,user,group,mod', fixdirs_is_ra_opt=True, fixdirs_is_required=0, fixdirs_in_unique=0, \
-        default_kill3=True, kill3sd='use kill -3 for stopping program in ultimate case', kill3ld='use kill -3 for stopping program if -15 does not work\nvalue = True or False', kill3_is_ra_opt=True, kill3_is_required=0, kill3_is_unique=0, \
-        default_kill9=False, kill9sd='use kill -9 for stopping program in ultimate case', kill9ld='use kill -9 for stopping program if -15 and -3 does not work\nvalue = True or False', kill9_is_ra_opt=True, kill9_is_required=0, kill9_is_unique=0, \
-        default_loglevel=0, loglevelsd='log level', loglevelld='log level\n0 to 5. 0 : only errors are logged, 1,2,3 : more log, 4,5 : degug', loglevel_is_ra_opt=True, loglevel_is_required=0, loglevel_is_unique=0, \
-        default_sleepafterstart=5, sleepafterstartsd='sleep time before the first monitoring after the process start', sleepafterstartld='sleep time before the first monitoring after the process start',sleepafterstart_is_ra_opt=True, sleepafterstart_is_required=0, sleepafterstart_is_unique=0, \
-        default_starttimeoutratio=1.0, starttimeoutratiosd='percent of start meta timeout while start testing are done', starttimeoutratiold='percent of start meta timeout while start testing are done\n value is a float in 0 to 1', starttimeoutratio_is_ra_opt=True, starttimeoutratio_is_required=0, starttimeoutratio_is_unique=0, \
-        default_sleepafterstop=5, sleepafterstopsd='sleep time before checking state after the process stop', sleepafterstopld='sleep time before checking state after the process stop', sleepafterstop_is_ra_opt=True, sleepafterstop_is_required=0, sleepafterstop_is_unique=0, \
-        default_ocf_write_pidfile=True, ocf_write_pidfilesd='ocf script write pidfile or not',ocf_write_pidfileld='ocf script write pidfile or not\nTrue: write pid file\nFalse: let binfile writing it himself', ocf_write_pidfile_is_ra_opt=False, ocf_write_pidfile_is_required=0, ocf_write_pidfile_is_unique=0, \
-        default_monitor_clean_dirty_pidfile=True, monitor_clean_dirty_pidfilesd='cleaning dirty pidfile during monitor function', monitor_clean_dirty_pidfileld='cleaning dirty pidfile during monitor function\nFor example : pidfile present but no process\nvalue = True or False, default = True', monitor_clean_dirty_pidfile_is_ra_opt=True, monitor_clean_dirty_pidfile_is_required=0, monitor_clean_dirty_pidfile_is_unique=0, \
-        default_start_force_stop_timeout=None, start_force_stop_timeoutsd='timeout in secondes. start force a timeout if start find binfile in a failed state', start_force_stop_timeoutld='timeout in secondes. start force a timeout if start find binfile not in state OCF_SUCCESS, OCF_RUNNING_MASTER or OCF_NOT_RUNNING', start_force_stop_timeout_is_ra_opt=True, start_force_stop_timeout_is_required=0, start_force_stop_timeout_is_unique=0, \
-        default_user_cmd=None, user_cmdsd='User to run the command as', user_cmdld='User to run the command as', user_cmd_is_ra_opt=False, user_cmd_is_required=0, user_cmd_is_unique=0, \
-        default_change_workdir=None, change_workdirsd='Full path name of the work directory', change_workdirld='The path from where the binfile will be executed.', change_workdir_is_ra_opt=False, change_workdir_is_required=0, change_workdir_is_unique=0, \
-        default_process_file_ulimit=1024, process_file_ulimitsd='ulimit open file for process', process_file_ulimitld='ulimit open file for process. minimum is 1024.', process_file_ulimit_is_ra_opt=True, process_file_ulimit_is_required=0, process_file_ulimit_is_unique=0, \
-        default_status_check_ppid=True, status_check_ppidsd='status/monitor search if ppid=1', status_check_ppidld='If True, status/monitor search the process depend from init', status_check_ppid_is_ra_opt=False, status_check_ppid_is_required=0, status_check_ppid_is_unique=0, \
-        default_status_check_pidfile=True, status_check_pidfilesd='Control between pidfile and pid', status_check_pidfileld='Control if the pid in pidfile is the same as the pid found in the process list. If it is different, the process has been relaunched: there has been a problem, the state of the process potentially unknown.', status_check_pidfile_is_ra_opt=False, status_check_pidfile_is_required=0, status_check_pidfile_is_unique=0):
-            
+    def __init__(self, \
+        resname, \
+        longdesc, \
+        shortdesc, \
+        default_binfile, \
+        default_pidfile, \
+        version='1.0', \
+        ldlang='en', \
+        sdlang='en', \
+        autoaction=True, \
+        logfacility=syslog.LOG_DAEMON, \
+        # binfile
+        binfilesd='binary file to be executed', \
+        binfileld='binary file to be executed', \
+        binfile_is_ra_opt=True, \
+        binfile_is_required=0, binfile_is_unique=0, \
+        # pidfile
+        pidfilesd='Path to the pid file', \
+        pidfileld='Path to the pid file', \
+        pidfile_is_ra_opt=True, \
+        pidfile_is_required=0, \
+        pidfile_is_unique=0, \
+        # piddir_owner
+        default_piddir_owner='root', \
+        piddir_ownersd='owner of pidfile directory', \
+        piddir_ownerld='owner of pidfile directory', \
+        piddir_owner_is_ra_opt=True, \
+        piddir_owner_is_required=0, \
+        piddir_owner_is_unique=0, \
+        # piddir_group
+        default_piddir_group='root', \
+        piddir_groupsd='group of pidfile directory', \
+        piddir_groupld='group of pidfile directory', \
+        piddir_group_is_ra_opt=True, \
+        piddir_group_is_required=0, \
+        piddir_group_is_unique=0, \
+        # piddir_mod
+        default_piddir_mod='755', \
+        piddir_modsd='premission of pidfile directory', \
+        piddir_modld='premission of pidfile directory', \
+        piddir_mod_is_ra_opt=True, \
+        piddir_mod_is_required=0, \
+        piddir_mod_is_unique=0, \
+        # binfileoptions
+        default_binfileoptions=None, \
+        binfileoptionssd='start options for binfile', \
+        binfileoptionsld='start options for binfile', \
+        binfileoptions_is_ra_opt=True, \
+        binfileoption_is_required=0, \
+        binfileoption_is_unique=0, \
+        # maxnbprocess
+        default_maxnbprocess=1, \
+        maxnbprocsd='Maximum number of process depending of init', \
+        maxnbprocld='Maximum number of process depending of init.\n-1 or 0 means no limit.', \
+        maxnbprocess_is_ra_opt=True, \
+        maxnbprocess_is_required=0, \
+        maxnbprocess_is_unique=0, \
+        # commande_line_searched
+        default_commande_line_searched=None, \
+        commande_line_searchedsd='Command line searched', \
+        commande_line_searchedld='Command line has searched if the one stored in the /proc directory of the process does not match the one stored in binfile (this difference is visible with a grep).', \
+        commande_line_searched_is_ra_opt=True, \
+        commande_line_searched_is_required=0, \
+        commande_line_searched_is_unique=0, \
+        # msfile
+        default_msfile=None, \
+        msfilesd='file for master or slave mode', \
+        msfileld='file for master or slave mode', \
+        msfile_is_ra_opt=False, \
+        msfile_is_required=0, \
+        msfile_is_unique=0, \
+        # fixdirs
+        default_fixdirs=None, \
+        fixdirssd='fixing perms for dirs specified in the list', \
+        fixdirsld='fixing perms for dirs specified in the list. create dirs if dones not exist.\nThe format is :\nfixdirs=LIST_DIRS\nLIST_DIRS=DIR_CONF;DIR_CONF;...\nDIR_CONF=dir,user,group,mod', \
+        fixdirs_is_ra_opt=True, \
+        fixdirs_is_required=0, \
+        fixdirs_in_unique=0, \
+        # kill3
+        default_kill3=True, \
+        kill3sd='use kill -3 (SIGQUIT) for stopping program in ultimate case', \
+        kill3ld='use kill -3 (SIGQUIT) for stopping program if -15 does not work\nvalue = True or False', \
+        kill3_is_ra_opt=True, \
+        kill3_is_required=0, \
+        kill3_is_unique=0, \
+        # kill 9
+        default_kill9=False, \
+        kill9sd='use kill -9 (SIGKILL) for stopping program in ultimate case', \
+        kill9ld='use kill -9 (SIGKILL) for stopping program if -15 and -3 does not work\nvalue = True or False', \
+        kill9_is_ra_opt=True, \
+        kill9_is_required=0, \
+        kill9_is_unique=0, \
+        # ratio kill 15
+        default_kill15_ratio=0.65, \
+        kill15_ratiosd='ratio for the kill 15 (SIGTERM) to split the stop timeout.', \
+        kill15_ratiold='ratio for the kill 15 (SIGTERM) to split the stop timeout. The value is between 0 and 1. The total kill15_ratios + kill3_ratio + kill9_ratio must be less than or equal to one. It is better to leave some time for the script at the end of the timeout to finish its execution keeping a total less than one.', \
+        kill15_ratio_is_ra_opt=True, \
+        kill15_ratio_is_required=0, \
+        kill15_ratio_is_unique=0, \
+        # ratio kill 3
+        default_kill3_ratio=0.2, \
+        kill3_ratiosd='ratio for the kill 3 (SIGQUIT) to split the stop timeout.', \
+        kill3_ratiold='ratio for the kill 3 (SIGQUIT) to split the stop timeout. The value is between 0 and 1. The total kill15_ratios + kill3_ratio + kill9_ratio must be less than or equal to one. It is better to leave some time for the script at the end of the timeout to finish its execution keeping a total less than one.', \
+        kill3_ratio_is_ra_opt=True, \
+        kill3_ratio_is_required=0, \
+        kill3_ratio_is_unique=0, \
+        # ration kill 9
+        default_kill9_ratio=0.05, \
+        kill9_ratiosd='ratio for the kill 9 (SIGKILL) to split the stop timeout.', \
+        kill9_ratiold='ratio for the kill 9 (SIGKILL) to split the stop timeout. The value is between 0 and 1. The total kill15_ratios + kill3_ratio + kill9_ratio must be less than or equal to one. It is better to leave some time for the script at the end of the timeout to finish its execution keeping a total less than one.', \
+        kill9_ratio_is_ra_opt=True, \
+        kill9_ratio_is_required=0, \
+        kill9_ratio_is_unique=0, \
+        # loglevel
+        default_loglevel=0, \
+        loglevelsd='log level', \
+        loglevelld='log level\n0 to 5. 0 : only errors are logged, 1,2,3 : more log, 4,5 : degug', \
+        loglevel_is_ra_opt=True, \
+        loglevel_is_required=0, \
+        loglevel_is_unique=0, \
+        # sleepafterstart
+        default_sleepafterstart=5, \
+        sleepafterstartsd='sleep time before the first monitoring after the process start', \
+        sleepafterstartld='sleep time before the first monitoring after the process start', \
+        sleepafterstart_is_ra_opt=True, \
+        sleepafterstart_is_required=0, \
+        sleepafterstart_is_unique=0, \
+        # starttimeoutratio
+        default_starttimeoutratio=1.0, \
+        starttimeoutratiosd='percent of start meta timeout while start testing are done', \
+        starttimeoutratiold='percent of start meta timeout while start testing are done\n value is a float in 0 to 1', \
+        starttimeoutratio_is_ra_opt=True, \
+        starttimeoutratio_is_required=0, \
+        starttimeoutratio_is_unique=0, \
+        # sleepafterstop
+        default_sleepafterstop=5, \
+        sleepafterstopsd='sleep time before checking state after the process stop', \
+        sleepafterstopld='sleep time before checking state after the process stop', \
+        sleepafterstop_is_ra_opt=True, \
+        sleepafterstop_is_required=0, \
+        sleepafterstop_is_unique=0, \
+        # sleepaftersigquit
+        default_sleepaftersigquit=5, \
+        sleepaftersigquitsd='sleep time before checking state after sigquit', \
+        sleepaftersigquitld='sleep time before checking state after sigquit', \
+        sleepaftersigquit_is_ra_opt=True, \
+        sleepaftersigquit_is_required=0, \
+        sleepaftersigquit_is_unique=0, \
+        # sleepaftersigkill
+        default_sleepaftersigkill=1, \
+        sleepaftersigkillsd='sleep time before checking state after sigkill', \
+        sleepaftersigkillld='sleep time before checking state after sigkill', \
+        sleepaftersigkill_is_ra_opt=True, \
+        sleepaftersigkill_is_required=0, \
+        sleepaftersigkill_is_unique=0, \
+        # ocf_write_pidfile
+        default_ocf_write_pidfile=True, \
+        ocf_write_pidfilesd='ocf script write pidfile or not', \
+        ocf_write_pidfileld='ocf script write pidfile or not\nTrue: write pid file\nFalse: let binfile writing it himself', \
+        ocf_write_pidfile_is_ra_opt=False, \
+        ocf_write_pidfile_is_required=0, \
+        ocf_write_pidfile_is_unique=0, \
+        # monitor_clean_dirty_pidfile
+        default_monitor_clean_dirty_pidfile=True, \
+        monitor_clean_dirty_pidfilesd='cleaning dirty pidfile during monitor function', \
+        monitor_clean_dirty_pidfileld='cleaning dirty pidfile during monitor function\nFor example : pidfile present but no process\nvalue = True or False, default = True', \
+        monitor_clean_dirty_pidfile_is_ra_opt=True, \
+        monitor_clean_dirty_pidfile_is_required=0, \
+        monitor_clean_dirty_pidfile_is_unique=0, \
+        # start_force_stop_timeout
+        default_start_force_stop_timeout=None, \
+        start_force_stop_timeoutsd='timeout in secondes. start force a timeout if start find binfile in a failed state', \
+        start_force_stop_timeoutld='timeout in secondes. start force a timeout if start find binfile not in state OCF_SUCCESS, OCF_RUNNING_MASTER or OCF_NOT_RUNNING', \
+        start_force_stop_timeout_is_ra_opt=True, \
+        start_force_stop_timeout_is_required=0, \
+        start_force_stop_timeout_is_unique=0, \
+        # user_cmd
+        default_user_cmd=None, \
+        user_cmdsd='User to run the command as', \
+        user_cmdld='User to run the command as', \
+        user_cmd_is_ra_opt=False, \
+        user_cmd_is_required=0, \
+        user_cmd_is_unique=0, \
+        # change_workdir
+        default_change_workdir=None, \
+        change_workdirsd='Full path name of the work directory', \
+        change_workdirld='The path from where the binfile will be executed.', \
+        change_workdir_is_ra_opt=False, \
+        change_workdir_is_required=0, \
+        change_workdir_is_unique=0, \
+        # process_file_ulimit
+        default_process_file_ulimit=1024, \
+        process_file_ulimitsd='ulimit open file for process', \
+        process_file_ulimitld='ulimit open file for process. minimum is 1024.', \
+        process_file_ulimit_is_ra_opt=True, \
+        process_file_ulimit_is_required=0, \
+        process_file_ulimit_is_unique=0, \
+        # status_check_ppid
+        default_status_check_ppid=True, \
+        status_check_ppidsd='status/monitor search if ppid=1', \
+        status_check_ppidld='If True, status/monitor search the process depend from init\nValues are True, False, All, None or a combination of start, stop, and monitor separated by commas.', \
+        status_check_ppid_is_ra_opt=False, \
+        status_check_ppid_is_required=0, \
+        status_check_ppid_is_unique=0, \
+        # status_check_pidfile
+        default_status_check_pidfile=True, \
+        status_check_pidfilesd='Control between pidfile and pid', \
+        status_check_pidfileld='Control if the pid in pidfile is the same as the pid found in the process list.\nIf it is different, the process has been relaunched: there has been a problem, the state of the process potentially unknown.\nValues are True, False, All, None or a combination of start, stop, and monitor separated by commas.', \
+        status_check_pidfile_is_ra_opt=False, \
+        status_check_pidfile_is_required=0, \
+        status_check_pidfile_is_unique=0 ):
         super(ocfScript,self).__init__()
         syslog.openlog(logoption=syslog.LOG_PID, facility=logfacility)
         self.metadata = ocfMeta(resname, longdesc, shortdesc, version, ldlang, sdlang)
         self.master = 'master'
         self.slave = 'slave'
         self.nodename = os.uname()[1]
-        
         self.choices = []
         self.runoptions = {}
         if autoaction:
@@ -216,37 +399,234 @@ class ocfScript(ocfReturnCodes):
         
         self.options = {}
         try:
-            self.init_option('binfile', binfile_is_ra_opt, binfileld, binfilesd, required=binfile_is_required, unique=binfile_is_unique, default=default_binfile)
-            self.init_option('pidfile', pidfile_is_ra_opt, pidfileld, pidfilesd, required=pidfile_is_required, unique=pidfile_is_unique, default=default_pidfile)
-            self.init_option('piddir_owner', piddir_owner_is_ra_opt, piddir_ownerld, piddir_ownersd, required=piddir_owner_is_required, unique=piddir_owner_is_unique, default=default_piddir_owner)
-            self.init_option('piddir_group', piddir_group_is_ra_opt, piddir_groupld, piddir_groupsd, required=piddir_group_is_required, unique=piddir_group_is_unique, default=default_piddir_group)
-            self.init_option('piddir_mod', piddir_mod_is_ra_opt, piddir_modld, piddir_modsd, required=piddir_mod_is_required, unique=piddir_mod_is_unique, default=default_piddir_mod)
-            self.init_option('loglevel', loglevel_is_ra_opt, loglevelld, loglevelsd, required=loglevel_is_required, unique=loglevel_is_unique, default=default_loglevel, convertfct=self.convert_to_int)
-            self.init_option('binfileoptions', binfileoptions_is_ra_opt, binfileoptionsld, binfileoptionssd, required=binfileoption_is_required, unique=binfileoption_is_unique, default=default_binfileoptions)
-            self.init_option('msfile', msfile_is_ra_opt, msfileld, msfilesd, required=msfile_is_required, unique=msfile_is_unique, default=default_msfile)
-            self.init_option('maxnbprocess', maxnbprocess_is_ra_opt, maxnbprocld, maxnbprocsd, required=maxnbprocess_is_required, unique=maxnbprocess_is_unique, default=default_maxnbprocess, convertfct=self.convert_to_int)
-            self.init_option('commande_line_searched', commande_line_searched_is_ra_opt, commande_line_searchedld, commande_line_searchedsd, required=commande_line_searched_is_required, unique=commande_line_searched_is_unique, default=default_commande_line_searched if default_commande_line_searched else self.get_option('binfile'))
-            self.init_option('fixdirs', fixdirs_is_ra_opt, fixdirsld, fixdirssd, required=fixdirs_is_required, unique=fixdirs_in_unique, default=default_fixdirs)
-            self.init_option('kill3', kill3_is_ra_opt, kill3ld, kill3sd, required=kill3_is_required, unique=kill3_is_unique, default=default_kill3, convertfct=self.convert_to_bool)
-            self.init_option('kill9', kill9_is_ra_opt, kill9ld, kill9sd, required=kill9_is_required, unique=kill9_is_unique, default=default_kill9, convertfct=self.convert_to_bool)
-            self.init_option('sleepafterstart', sleepafterstart_is_ra_opt, sleepafterstartld, sleepafterstartsd, required=sleepafterstart_is_required, unique=sleepafterstart_is_unique, default=default_sleepafterstart, convertfct=self.convert_to_int)
-            self.init_option('starttimeoutratio', starttimeoutratio_is_ra_opt, starttimeoutratiold, starttimeoutratiosd, required=starttimeoutratio_is_required, unique=starttimeoutratio_is_unique, default=default_starttimeoutratio, convertfct=self.convert_to_float)
-            self.init_option('sleepafterstop', sleepafterstop_is_ra_opt, sleepafterstopld, sleepafterstopsd, required=sleepafterstop_is_required, unique=sleepafterstop_is_unique, default=default_sleepafterstop, convertfct=self.convert_to_int)
-            self.init_option('ocf_write_pidfile', ocf_write_pidfile_is_ra_opt, ocf_write_pidfileld, ocf_write_pidfilesd, required=ocf_write_pidfile_is_required, unique=ocf_write_pidfile_is_unique, default=default_ocf_write_pidfile, convertfct=self.convert_to_bool)
-            self.init_option('monitor_clean_dirty_pidfile', monitor_clean_dirty_pidfile_is_ra_opt, monitor_clean_dirty_pidfileld, monitor_clean_dirty_pidfilesd, required=monitor_clean_dirty_pidfile_is_required, unique=monitor_clean_dirty_pidfile_is_unique, default=default_monitor_clean_dirty_pidfile, convertfct=self.convert_to_bool)
-            self.init_option('start_force_stop_timeout', start_force_stop_timeout_is_ra_opt, start_force_stop_timeoutld, start_force_stop_timeoutsd, required=start_force_stop_timeout_is_required, unique=start_force_stop_timeout_is_unique, default=default_start_force_stop_timeout, convertfct=self.convert_to_int)
-            self.init_option('user_cmd', user_cmd_is_ra_opt, user_cmdld, user_cmdsd, required=user_cmd_is_required, unique=user_cmd_is_unique, default=default_user_cmd)
-            self.init_option('change_workdir', change_workdir_is_ra_opt, change_workdirld, change_workdirsd, required=change_workdir_is_required, unique=change_workdir_is_unique, default=default_change_workdir)
-            self.init_option('process_file_ulimit', process_file_ulimit_is_ra_opt, process_file_ulimitld, process_file_ulimitsd, required=process_file_ulimit_is_required, unique=process_file_ulimit_is_unique, default=default_process_file_ulimit, convertfct=self.convert_to_int)
-            self.init_option('status_check_ppid', status_check_ppid_is_ra_opt, status_check_ppidld, status_check_ppidsd, required=status_check_ppid_is_required, unique=status_check_ppid_is_unique, default=default_status_check_ppid, convertfct=self.convert_to_bool)
-            self.init_option('status_check_pidfile', status_check_pidfile_is_ra_opt, status_check_pidfileld, status_check_pidfilesd, required=status_check_pidfile_is_required, unique=status_check_pidfile_is_unique, default=default_status_check_pidfile, convertfct=self.convert_to_bool)
+            self.init_option('binfile', \
+                binfile_is_ra_opt, \
+                binfileld, \
+                binfilesd, \
+                required=binfile_is_required, \
+                unique=binfile_is_unique, \
+                default=default_binfile)
+            self.init_option('pidfile', \
+                pidfile_is_ra_opt, \
+                pidfileld, \
+                pidfilesd, \
+                required=pidfile_is_required, \
+                unique=pidfile_is_unique, \
+                default=default_pidfile)
+            self.init_option('piddir_owner', \
+                piddir_owner_is_ra_opt, \
+                piddir_ownerld, \
+                piddir_ownersd, \
+                required=piddir_owner_is_required, \
+                unique=piddir_owner_is_unique, \
+                default=default_piddir_owner)
+            self.init_option('piddir_group', \
+                piddir_group_is_ra_opt, \
+                piddir_groupld, \
+                piddir_groupsd, \
+                required=piddir_group_is_required, \
+                unique=piddir_group_is_unique, \
+                default=default_piddir_group)
+            self.init_option('piddir_mod', \
+                piddir_mod_is_ra_opt, \
+                piddir_modld, \
+                piddir_modsd, \
+                required=piddir_mod_is_required, \
+                unique=piddir_mod_is_unique, \
+                default=default_piddir_mod)
+            self.init_option('loglevel', \
+                loglevel_is_ra_opt, \
+                loglevelld, \
+                loglevelsd, \
+                required=loglevel_is_required, \
+                unique=loglevel_is_unique, \
+                default=default_loglevel, \
+                convertfct=self.convert_to_int)
+            self.init_option('binfileoptions', \
+                binfileoptions_is_ra_opt, \
+                binfileoptionsld, \
+                binfileoptionssd, \
+                required=binfileoption_is_required, \
+                unique=binfileoption_is_unique, \
+                default=default_binfileoptions)
+            self.init_option('msfile', \
+                msfile_is_ra_opt, \
+                msfileld, \
+                msfilesd, \
+                required=msfile_is_required, \
+                unique=msfile_is_unique, \
+                default=default_msfile)
+            self.init_option('maxnbprocess', \
+                maxnbprocess_is_ra_opt, \
+                maxnbprocld, \
+                maxnbprocsd, \
+                required=maxnbprocess_is_required, \
+                unique=maxnbprocess_is_unique, \
+                default=default_maxnbprocess, \
+                convertfct=self.convert_to_int)
+            self.init_option('commande_line_searched', \
+                commande_line_searched_is_ra_opt, \
+                commande_line_searchedld, \
+                commande_line_searchedsd, \
+                required=commande_line_searched_is_required, \
+                unique=commande_line_searched_is_unique, \
+                default=default_commande_line_searched if default_commande_line_searched else self.get_option('binfile'))
+            self.init_option('fixdirs', \
+                fixdirs_is_ra_opt, \
+                fixdirsld, \
+                fixdirssd, \
+                required=fixdirs_is_required, \
+                unique=fixdirs_in_unique, \
+                default=default_fixdirs)
+            self.init_option('kill3', \
+                kill3_is_ra_opt, \
+                kill3ld, \
+                kill3sd, \
+                required=kill3_is_required, \
+                unique=kill3_is_unique, \
+                default=default_kill3, \
+                convertfct=self.convert_to_bool)
+            self.init_option('kill9', \
+                kill9_is_ra_opt, \
+                kill9ld, \
+                kill9sd, \
+                required=kill9_is_required, \
+                unique=kill9_is_unique, \
+                default=default_kill9, \
+                convertfct=self.convert_to_bool)
+            self.init_option('kill15_ratio', \
+                kill15_ratio_is_ra_opt, \
+                kill15_ratiold, \
+                kill15_ratiosd, \
+                required=kill15_ratio_is_required, \
+                unique=kill15_ratio_is_unique, \
+                default=default_kill15_ratio, \
+                convertfct=self.convert_to_float)
+            self.init_option('kill3_ratio', \
+                kill3_ratio_is_ra_opt, \
+                kill3_ratiold, \
+                kill3_ratiosd, \
+                required=kill3_ratio_is_required, \
+                unique=kill3_ratio_is_unique, \
+                default=default_kill3_ratio, \
+                convertfct=self.convert_to_float)
+            self.init_option('kill9_ratio', \
+                kill9_ratio_is_ra_opt, \
+                kill9_ratiold, \
+                kill9_ratiosd, \
+                required=kill9_ratio_is_required, \
+                unique=kill9_ratio_is_unique, \
+                default=default_kill9_ratio, \
+                convertfct=self.convert_to_float)
+            self.init_option('sleepafterstart', \
+                sleepafterstart_is_ra_opt, \
+                sleepafterstartld, \
+                sleepafterstartsd, \
+                required=sleepafterstart_is_required, \
+                unique=sleepafterstart_is_unique, \
+                default=default_sleepafterstart, \
+                convertfct=self.convert_to_int)
+            self.init_option('starttimeoutratio', \
+                starttimeoutratio_is_ra_opt, \
+                starttimeoutratiold, \
+                starttimeoutratiosd, \
+                required=starttimeoutratio_is_required, \
+                unique=starttimeoutratio_is_unique, \
+                default=default_starttimeoutratio, \
+                convertfct=self.convert_to_float)
+            self.init_option('sleepafterstop', \
+                sleepafterstop_is_ra_opt, \
+                sleepafterstopld, \
+                sleepafterstopsd, \
+                required=sleepafterstop_is_required, \
+                unique=sleepafterstop_is_unique, \
+                default=default_sleepafterstop, \
+                convertfct=self.convert_to_int)
+            self.init_option('sleepaftersigquit', \
+                sleepaftersigquit_is_ra_opt, \
+                sleepaftersigquitld, \
+                sleepaftersigquitsd, \
+                required=sleepaftersigquit_is_required, \
+                unique=sleepaftersigquit_is_unique, \
+                default=default_sleepaftersigquit, \
+                convertfct=self.convert_to_int)
+            self.init_option('sleepaftersigkill', \
+                sleepaftersigkill_is_ra_opt, \
+                sleepaftersigkillld, \
+                sleepaftersigkillsd, \
+                required=sleepaftersigkill_is_required, \
+                unique=sleepaftersigkill_is_unique, \
+                default=default_sleepaftersigkill, \
+                convertfct=self.convert_to_int)
+            self.init_option('ocf_write_pidfile', \
+                ocf_write_pidfile_is_ra_opt, \
+                ocf_write_pidfileld, \
+                ocf_write_pidfilesd, \
+                required=ocf_write_pidfile_is_required, \
+                unique=ocf_write_pidfile_is_unique, \
+                default=default_ocf_write_pidfile, \
+                convertfct=self.convert_to_bool)
+            self.init_option('monitor_clean_dirty_pidfile', \
+                monitor_clean_dirty_pidfile_is_ra_opt, \
+                monitor_clean_dirty_pidfileld, \
+                monitor_clean_dirty_pidfilesd, \
+                required=monitor_clean_dirty_pidfile_is_required, \
+                unique=monitor_clean_dirty_pidfile_is_unique, \
+                default=default_monitor_clean_dirty_pidfile, \
+                convertfct=self.convert_to_bool)
+            self.init_option('start_force_stop_timeout', \
+                start_force_stop_timeout_is_ra_opt, \
+                start_force_stop_timeoutld, \
+                start_force_stop_timeoutsd, \
+                required=start_force_stop_timeout_is_required, \
+                unique=start_force_stop_timeout_is_unique, \
+                default=default_start_force_stop_timeout, \
+                convertfct=self.convert_to_int)
+            self.init_option('user_cmd', \
+                user_cmd_is_ra_opt, \
+                user_cmdld, \
+                user_cmdsd, \
+                required=user_cmd_is_required, \
+                unique=user_cmd_is_unique, \
+                default=default_user_cmd)
+            self.init_option('change_workdir', \
+                change_workdir_is_ra_opt, \
+                change_workdirld, \
+                change_workdirsd, \
+                required=change_workdir_is_required, \
+                unique=change_workdir_is_unique, \
+                default=default_change_workdir)
+            self.init_option('process_file_ulimit', \
+                process_file_ulimit_is_ra_opt, \
+                process_file_ulimitld, \
+                process_file_ulimitsd, \
+                required=process_file_ulimit_is_required, \
+                unique=process_file_ulimit_is_unique, \
+                default=default_process_file_ulimit, \
+                convertfct=self.convert_to_int)
+            self.init_option('status_check_ppid', \
+                status_check_ppid_is_ra_opt, \
+                status_check_ppidld, \
+                status_check_ppidsd, \
+                required=status_check_ppid_is_required, \
+                unique=status_check_ppid_is_unique, \
+                default=default_status_check_ppid)
+            self.init_option('status_check_pidfile', \
+                status_check_pidfile_is_ra_opt, \
+                status_check_pidfileld, \
+                status_check_pidfilesd, \
+                required=status_check_pidfile_is_required, \
+                unique=status_check_pidfile_is_unique, \
+                default=default_status_check_pidfile)
+            self.init_special_start_stop_mon_options('status_check_ppid', \
+                {'start':'status_check_ppid_for_start', 'stop':'status_check_ppid_for_stop', 'monitor':'status_check_ppid_for_monitor'})
+            self.init_special_start_stop_mon_options('status_check_pidfile', \
+                {'start':'status_check_pidfile_for_start', 'stop':'status_check_pidfile_for_stop', 'monitor':'status_check_pidfile_for_monitor'})
         except:
             self.ocf_log_err('erreur lors de ocfscript.__init__')
             raise
-        
         # Notify
         self.notify_infos = ocfNotifyInfo()
-        
         self.ocf_log('ocfScript nodename={}'.format(self.nodename, msglevel=4))
 
     ########################################
@@ -449,6 +829,46 @@ class ocfScript(ocfReturnCodes):
             raise
 
     ########################################
+    def init_special_start_stop_mon_options(self, \
+        opt, \
+        new_opt_dic, \
+        all_opt_list=['true','all'], \
+        no_opt_list=['false', 'none', 'no'], \
+        start_opt_list=['start'], \
+        stop_opt_list=['stop'], \
+        mon_opt_list=['mon', 'monitor'], \
+        separator=','):
+        '''
+        Notes : 
+        - all_opt_list et no_opt_list are exclusives. They can not be mixed with start|stop|mon_opt_list
+        - *_opt_list are in lower case
+        - new_opt_dic must have the three keys start, stop, monitor
+        '''
+        lov = str(self.get_option(opt)).lower()
+        if lov in all_opt_list:
+            start=stop=mon=True
+        elif lov in no_opt_list:
+            start=stop=mon=False
+        else:
+            lov_list = lov.rstrip(',').split(',')
+            start=stop=mon=False
+            for x in lov_list:
+                if x in start_opt_list:
+                   start=True
+                elif x in stop_opt_list:
+                    stop=True
+                elif x in mon_opt_list:
+                    mon=True
+                else:
+                    msg = 'init_special_start_stop_mon_options: for {} value {} is forbiden'.format(opt, x)
+                    self.ocf_log_err(msg)
+                    raise ocfError(self.ocfretcodes['OCF_ERR_CONFIGURED'], msg)
+        self.add_option(new_opt_dic['start'], None, start)
+        self.add_option(new_opt_dic['stop'], None, stop)
+        self.add_option(new_opt_dic['monitor'], None, mon)
+        self.ocf_log('ocfScript.init_special_start_stop_mon_options: {}:{}, {}:{}, {}:{}'.format(new_opt_dic['start'], start, new_opt_dic['stop'], stop, new_opt_dic['monitor'], mon), msglevel=5)
+
+    ########################################
     def __init_dir(self, dir, uid, gid, mod):
         '''raise ocfError'''
         self.ocf_log('ocfScript.__init_dir with uid=\"{}\" gid=\"{}\" mod=\"{:o}\"'.format(uid, gid, mod), msglevel=5)
@@ -530,13 +950,23 @@ class ocfScript(ocfReturnCodes):
             raise
 
     ########################################
-    def get_first_pids(self):
+    def maxnbprocess_unlimited(self):
+        #self.ocf_log('ocfScript.maxnbprocess_unlimited', msglevel=5)
+        if self.get_option('maxnbprocess') in [0,-1]:
+            self.ocf_log('ocfScript.maxnbprocess_unlimited: maxnbprocess is unlimited', msglevel=5)
+            return True
+        else:
+            self.ocf_log('ocfScript.maxnbprocess_unlimited: maxnbprocess is limited to {}'.format(self.get_option('maxnbprocess')), msglevel=5)
+            return False
+
+    ########################################
+    def get_first_pids(self, check_ppid=True):
         '''get pid of binfile with ppid = init'''
-        self.ocf_log('ocfScript.get_first_pids: searching {}'.format(self.get_option('commande_line_searched')), msglevel=5)
+        self.ocf_log('ocfScript.get_first_pids: searching {} with check_ppid={}'.format(self.get_option('commande_line_searched'), check_ppid), msglevel=5)
         ret = []
         for proc in psutil.process_iter():
             try:
-                if self.get_option('status_check_ppid'):
+                if check_ppid:
                     if psutil.pid_exists(proc.pid) and self.get_option('commande_line_searched') in proc.cmdline()[:2] and proc.ppid() == 1:
                         ret.append(proc.pid)
                 else:
@@ -578,7 +1008,7 @@ class ocfScript(ocfReturnCodes):
             msg = '{} is empty'.format(self.get_option('pidfile'))
             self.ocf_log_err(msg)
             raise ocfError(self.ocfretcodes['OCF_ERR_GENERIC'], msg)
-        elif lll > self.get_option('maxnbprocess'):
+        elif not self.maxnbprocess_unlimited() and lll > self.get_option('maxnbprocess'):
             msg = '{} contain more than {} pid'.format(self.get_option('pidfile'), self.get_option('maxnbprocess'))
             self.ocf_log_err(msg)
             raise ocfError(self.ocfretcodes['OCF_ERR_GENERIC'], msg)
@@ -814,15 +1244,14 @@ class ocfScript(ocfReturnCodes):
         return ret
     
     ########################################
-    def status(self, clean_dirty_pidfile=False):
-        self.ocf_log('ocfScript.status with clean_dirty_pidfile={}'.format(clean_dirty_pidfile), msglevel=5)
+    def status(self, clean_dirty_pidfile=False, check_pidfile=True, check_ppid=True):
+        self.ocf_log('ocfScript.status with clean_dirty_pidfile={}, check_pidfile={}, check_ppid={}'.format(clean_dirty_pidfile, check_pidfile, check_ppid), msglevel=5)
         
-        processes = self.get_first_pids()
-        if len(processes) > self.get_option('maxnbprocess'):
+        processes = self.get_first_pids(check_ppid=check_ppid)
+        if not self.maxnbprocess_unlimited() and len(processes) > self.get_option('maxnbprocess'):
             return self.status_error('Too much {} started ({} started).'.format(self.get_option('binfile'), len(processes)))
 
-        # TODO status_check_pidfile
-        if self.get_option('status_check_pidfile'):
+        if check_pidfile:
             if not self.get_option('pidfile'):
                 return self.status_error('The pidfile has not been specified, exiting.')
             
@@ -876,26 +1305,26 @@ class ocfScript(ocfReturnCodes):
     def status_start(self, clean_dirty_pidfile=False, with_status_inherit=True):
         self.ocf_log('ocfScript.status_start with clean_dirty_pidfile={} and with_status_inherit={}'.format(clean_dirty_pidfile, with_status_inherit), msglevel=5)
         statusfct = self.status if with_status_inherit else super(self.__class__, self).status
-        return statusfct(clean_dirty_pidfile=clean_dirty_pidfile)
+        return statusfct(clean_dirty_pidfile=clean_dirty_pidfile, check_pidfile=self.get_option('status_check_pidfile_for_start'), check_ppid=self.get_option('status_check_ppid_for_start'))
     
     ########################################
     def status_stop(self, clean_dirty_pidfile=False, with_status_inherit=True):
         self.ocf_log('ocfScript.status_stop with clean_dirty_pidfile={} and with_status_inherit={}'.format(clean_dirty_pidfile, with_status_inherit), msglevel=5)
         statusfct = self.status if with_status_inherit else super(self.__class__, self).status
-        return statusfct(clean_dirty_pidfile=clean_dirty_pidfile)
+        return statusfct(clean_dirty_pidfile=clean_dirty_pidfile, check_pidfile=self.get_option('status_check_pidfile_for_stop'), check_ppid=self.get_option('status_check_ppid_for_stop'))
     
     ########################################
     def status_monitor(self, clean_dirty_pidfile=False, with_status_inherit=True):
         self.ocf_log('ocfScript.status_monitor with clean_dirty_pidfile={} and with_status_inherit={}'.format(clean_dirty_pidfile, with_status_inherit), msglevel=5)
         statusfct = self.status if with_status_inherit else super(self.__class__, self).status
-        return statusfct(clean_dirty_pidfile=clean_dirty_pidfile)
+        return statusfct(clean_dirty_pidfile=clean_dirty_pidfile, check_pidfile=self.get_option('status_check_pidfile_for_monitor'), check_ppid=self.get_option('status_check_ppid_for_monitor'))
     
     ########################################
-    def is_process_just_start(self, start_delay):
+    def is_process_just_start(self, start_delay, check_ppid=True):
         '''start_delai in seconds'''
         self.ocf_log('ocfScript.is_process_just_start', msglevel=5)
         
-        pids = self.get_first_pids()
+        pids = self.get_first_pids(check_ppid=check_ppid)
         if not pids:
             # must not append
             msg = 'ocfScript.is_process_just_start : Can\'t find pids'
@@ -1191,30 +1620,32 @@ class ocfScript(ocfReturnCodes):
                 raise
 
     ########################################
-    def stop_sigterm(self, statusfct, force_timeout=None):
-        '''stop with kill -15 '''
-        self.ocf_log('ocfScript.stop_sigterm : kill15 step', msglevel=5)
+    def stop_sig(self, sig, statusfct, timeout_ratio, sleep_after_sig, force_timeout=None):
+        '''stop with kill sig'''
+        self.ocf_log('ocfScript.stop_sig : kill{} step'.format(sig), msglevel=5)
         if force_timeout:
             stop_timeout = force_timeout
+            stop_loop_timeout = stop_timeout - sleep_after_sig
         else:
-            # Allow 4/5 of the action timeout for the orderly shutdown
+            # Allow kill_ratio of the action timeout for the orderly shutdown
             # (The origin unit is ms, hence the conversion)
-            # which meens 4 / (5 * 1000) = 0.0008
-            stop_timeout = self.calc_timeout(ratio=0.0008, default_timeout=240)
-        self.ocf_log('ocfScript.stop_sigterm : kill15 step, stop timeout is {}'.format(stop_timeout), msglevel=4)
+            # which meens kill_ratio/1000
+            stop_timeout = self.calc_timeout(ratio=timeout_ratio/1000, default_timeout=240)
+            stop_loop_timeout = stop_timeout - sleep_after_sig
+        self.ocf_log('ocfScript.stop_sig : kill{} step, stop timeout is {}'.format(sig, stop_timeout), msglevel=4)
         
         # Use directly get_first_pids which will be the good pid
-        pids = self.get_first_pids()
+        pids = self.get_first_pids(check_ppid=self.get_option('status_check_ppid_for_stop'))
         
         if pids:
             try:
-                self.kill_pids(pids, signal.SIGTERM)
+                self.kill_pids(pids, sig)
             except:
-                self.ocf_log('ocfScript.stop_sigterm : self.kill_pids error', msglevel=4)
+                self.ocf_log('ocfScript.stop_sig : self.kill_pids error for signal {}'.format(sig), msglevel=4)
                 raise
             else:
-                self.ocf_log('ocfScript.stop_sigterm waiting {} seconds...'.format(self.get_option('sleepafterstop')), msglevel=3)
-                time.sleep(self.get_option('sleepafterstop'))
+                self.ocf_log('ocfScript.stop_sig for kill {} waiting {} seconds...'.format(sig, sleep_after_sig), msglevel=3)
+                time.sleep(sleep_after_sig)
             
             # Deleting pidfile if binfile does not. Let's binfile who does deal with it
             if self.get_option('ocf_write_pidfile'):
@@ -1224,44 +1655,26 @@ class ocfScript(ocfReturnCodes):
                     raise
                 
             start_time = time.time()
-            while time.time() - start_time< stop_timeout:
+            while time.time() - start_time < stop_loop_timeout:
                 statusret = statusfct(clean_dirty_pidfile=self.get_option('monitor_clean_dirty_pidfile'))
                 if statusret == self.ocfretcodes['OCF_NOT_RUNNING']:
                     break;
                 # If binfile should deal with pidfile but have a problem, deleting pidfile. Could be redundant in certain case of monitor_clean_dirty_pidfile
-                if not self.get_option('ocf_write_pidfile') and statusret not in [OCF_SUCCESS,self.ocfretcodes['OCF_RUNNING_MASTER']]:
+                if not self.get_option('ocf_write_pidfile') and statusret not in [self.ocfretcodes['OCF_SUCCESS'],self.ocfretcodes['OCF_RUNNING_MASTER']]:
                     try:
                         self.ocf_log_warn('Deleting pidfile {} during stop due to a problem return by status fonction'.format(self.get_option('pidfile')))
                         self.remove_pidfile()
                     except:
                         raise
-                self.ocf_log('ocfScript.stop_sigterm stop in progress.', msglevel=3)
+                self.ocf_log('ocfScript.stop_sig :  for signal {}, stop in progress.'.format(sig), msglevel=3)
                 time.sleep(1)
             else:
                 msg = 'Does not stop correctly in {}'.format(stop_timeout)
                 self.ocf_log_warn(msg)
                 raise ocfError(self.ocfretcodes['OCF_ERR_GENERIC'], msg)
         else:
-            msg = 'Can not get pid during SIGTERM step'
+            msg = 'Can not get pid during signal {} step'.format(sig)
             self.ocf_log_warn( msg)
-            raise ocfError(self.ocfretcodes['OCF_ERR_GENERIC'], msg)
-    
-    ########################################
-    def stop_sig(self, sig, timesleep=5):
-        self.ocf_log('ocfScript.stop_sig', msglevel=5)
-        pids = self.get_first_pids()
-        if pids:
-            self.ocf_log('ocfScript.stop_sig : {}'.format(pids), msglevel=4)
-            try:
-                self.kill_pids(pids, sig)
-            except:
-                self.ocf_log('ocfScript.stop_sig : self.kill_pids error', msglevel=4)
-                raise
-            else:
-                time.sleep(timesleep)
-        else:
-            msg = 'Can not get pid'
-            self.ocf_log_warn(msg)
             raise ocfError(self.ocfretcodes['OCF_ERR_GENERIC'], msg)
     
     ########################################
@@ -1279,14 +1692,15 @@ class ocfScript(ocfReturnCodes):
             self.ocf_log('Program is already stop')
         else:
             try:
-                self.stop_sigterm(statusfct, force_timeout=force_timeout)
+                self.stop_sig(signal.SIGTERM, statusfct, self.get_option('kill15_ratio'), self.get_option('sleepafterstop'),force_timeout=force_timeout)
             except:
-                self.ocf_log_err('Error during SIGTERM')
+                self.ocf_log_err('Error during SIGTERM (kill -15)')
             
         if statusfct(clean_dirty_pidfile=self.get_option('monitor_clean_dirty_pidfile')) == self.ocfretcodes['OCF_NOT_RUNNING']:
             self.ocf_log('Stop correctly')
         else:
             if self.get_option('kill3'):
+                self.ocf_log_err('Error during SIGTERM (kill -15), using SIGQUIT (kill -3)')
                 # Delete pidfile if it is still present. Should not happen : if pidfile is present here, somthing has restart binfile 
                 try:
                     self.remove_pidfile()
@@ -1294,30 +1708,30 @@ class ocfScript(ocfReturnCodes):
                     return self.ocfretcodes['OCF_ERR_GENERIC']
         
                 try:
-                    self.stop_sig(signal.SIGQUIT)
+                    self.stop_sig(signal.SIGQUIT, statusfct, self.get_option('kill3_ratio'), self.get_option('sleepaftersigquit'))
                 except:
-                    self.ocf_log_err('Error during SIGQUIT')
+                    self.ocf_log_err('Error during SIGQUIT (kill -3)')
                     
                 if statusfct(clean_dirty_pidfile=self.get_option('monitor_clean_dirty_pidfile')) == self.ocfretcodes['OCF_NOT_RUNNING']:
-                    self.ocf_log('SIGKILL -3 did the job.')
+                    self.ocf_log('SIGQUIT (kill -3) did the job.')
                 else:
-                    self.ocf_log_warn('Failed to stop with SIGKILL -3.')
                     if self.get_option('kill9'):
+                        self.ocf_log_warn('Failed to stop with SIGQUIT (kill -3), using SIGKILL (kill -9)')
                         try:
-                            self.stop_sig(signal.SIGKILL, timesleep=1)
+                            self.stop_sig(signal.SIGKILL, statusfct, self.get_option('kill9_ratio'), self.get_option('sleepaftersigkill'))
                         except:
                             self.ocf_log_err('Error during SIGKILL')
                             
                         if statusfct(clean_dirty_pidfile=self.get_option('monitor_clean_dirty_pidfile')) == self.ocfretcodes['OCF_NOT_RUNNING']:
-                            self.ocf_log('SIGKILL -9 did the job.')
+                            self.ocf_log('SIGKILL (kill -9) did the job.')
                         else:
-                            self.ocf_log_err('Impossible to stop program with SIGKILL')
+                            self.ocf_log_err('Impossible to stop program with SIGKILL (kill -9)')
                             return self.ocfretcodes['OCF_ERR_GENERIC']
                     else:
-                        self.ocf_log_err('Impossible to stop program with SIGQUIT')
+                        self.ocf_log_err('Impossible to stop program with SIGQUIT (kill -3)')
                         return self.ocfretcodes['OCF_ERR_GENERIC']
             else:
-                self.ocf_log_err('Impossible to stop program with SIGTERM')
+                self.ocf_log_err('Impossible to stop program with SIGTERM (kill -15)')
                 return self.ocfretcodes['OCF_ERR_GENERIC']
 
         if self.get_option('msfile'):
@@ -1538,6 +1952,22 @@ class ocfScript(ocfReturnCodes):
             raise ocfError(self.ocfretcodes['OCF_ERR_CONFIGURED'], msg)
 
     ########################################
+    def validate_kill_ratio(self):
+        try:
+            # kill15_ratio
+            self.validate_opt_number('kill15_ratio', min=0, max=1.0, type=float)
+            # kill3_ratio
+            self.validate_opt_number('kill3_ratio', min=0, max=1.0, type=float)
+            # kill9_ratio
+            self.validate_opt_number('kill9_ratio', min=0, max=1.0, type=float)
+            if self.get_option('kill15_ratio')+self.get_option('kill3_ratio')+self.get_option('kill9_ratio') > 1:
+                msg = 'kill ratio error: kill3_ratio({})+kill15_ratio({})+kill9_ratio({})>1'.format(self.get_option('kill15_ratio'), self.get_option('kill3_ratio'), self.get_option('kill9_ratio'))
+                self.ocf_log_err(msg)
+                raise ocfError(self.ocfretcodes['OCF_ERR_CONFIGURED'], msg)
+        except:
+            raise
+
+    ########################################
     def validate_ocf_default_options(self):
         '''raise ocfError'''
         # binfile
@@ -1550,25 +1980,31 @@ class ocfScript(ocfReturnCodes):
             # loglevel
             self.validate_opt_number('loglevel', min=0, max=5)
             # maxnbprocess
-            self.validate_opt_number('maxnbprocess', min=1)
+            self.validate_opt_number('maxnbprocess', min=-1)
             # sleepafterstart
             self.validate_opt_number('sleepafterstart', min=0)
             # starttimeoutratio
             self.validate_opt_number('starttimeoutratio', min=0, max=1.0, type=float)
             # sleepafterstop
             self.validate_opt_number('sleepafterstop', min=0)
+            # sleepaftersigquit
+            self.validate_opt_number('sleepaftersigquit', min=0)
+            # sleepaftersigkill
+            self.validate_opt_number('sleepaftersigkill', min=0)
             # kill3
             self.validate_opt_bool('kill3')
             # kill9 first part
             self.validate_opt_bool('kill9')
+            # kill*_ratio
+            self.validate_kill_ratio()
             # monitor_clean_dirty_pidfile
             self.validate_opt_bool('monitor_clean_dirty_pidfile')
             # start_force_stop_timeout
             self.validate_opt_number('start_force_stop_timeout', min=0, noneisok=True)
             # status_check_ppid
-            self.validate_opt_bool('status_check_ppid')
+            #self.validate_opt_bool('status_check_ppid')
             # status_check_pidfile
-            self.validate_opt_bool('status_check_pidfile')
+            #self.validate_opt_bool('status_check_pidfile')
             # fixdirs
             self.fixdirs(fix=False)
             # process_file_ulimit
