@@ -92,8 +92,8 @@ class ocfChangeRoute(ocfScript):
     def __init__(self):
         try:
             super(ocfChangeRoute, self).__init__('ocfChangeRoute', \
-                'This is the ocf script to manage any daemon', \
-                'manage any daemon.', \
+                'This is the ocf script to manage network route', \
+                'manage network route.', \
                 None, \
                 None, \
                 binfile_is_ra_opt=False, \
@@ -131,6 +131,7 @@ class ocfChangeRoute(ocfScript):
             'MODIFY': ocfRoutesAction('MODIFY', function4start=self.modify_route), \
             'RESTORE': ocfRoutesAction('RESTORE', function4stop=self.modify_route)
             }
+        self.ocf_log('ocfChangeRoute: starting new ipdb', msglevel=5)
         self.ipdb = IPDB(mode='implicit')
 
     ########################################
@@ -139,9 +140,13 @@ class ocfChangeRoute(ocfScript):
     
     ########################################
     def ipdb_commit_and_reload(self):
-        try: 
+        self.ocf_log('ocfChangeRoute.ipdb_commit_and_reload', msglevel=5)
+        try:
+            self.ocf_log('ocfChangeRoute.ipdb_commit_and_reload: commit', msglevel=5)
             self.ipdb.commit()
+            self.ocf_log('ocfChangeRoute.ipdb_commit_and_reload: release', msglevel=5)
             self.ipdb.release()
+            self.ocf_log('ocfChangeRoute.ipdb_commit_and_reload: starting new ipdb', msglevel=5)
             self.ipdb = IPDB(mode='implicit')
         except:
             raise
@@ -169,7 +174,7 @@ class ocfChangeRoute(ocfScript):
             self.clean_on_error = confparser.getboolean('DEFAULT', 'cleanonerror', fallback=True)
             if not set(self.actions4routes) >= set(self.actions_order_start):
                 msg = 'ocfChangeRoute.initialize: actions_order_start, forbiden action in {}'.format(self.actions_order_start)
-                self.ocf_log(msg, msglevel=0)
+                self.ocf_log_raise(msg)
                 raise ocfError(self.ocfretcodes['OCF_ERR_GENERIC'], msg)
             else:
                 self.ocf_log('ocfChangeRoute.initialize: actions_order_start = {}'.format(self.actions_order_start), msglevel=4)
@@ -177,7 +182,7 @@ class ocfChangeRoute(ocfScript):
             self.actions_order_stop = confparser.get('DEFAULT', 'stoporder', fallback='DEL,ADD,RESTORE').rstrip(',').split(',')
             if not set(self.actions4routes) >= set(self.actions_order_stop):
                 msg = 'ocfChangeRoute.initialize: actions_order_stop, forbiden action in {}'.format(self.actions_order_stop)
-                self.ocf_log(msg, msglevel=0)
+                self.ocf_log_raise(msg)
                 raise ocfError(self.ocfretcodes['OCF_ERR_GENERIC'], msg)
             else:
                 self.ocf_log('ocfChangeRoute.initialize: actions_order_stop = {}'.format(self.actions_order_stop), msglevel=4)
@@ -200,7 +205,7 @@ class ocfChangeRoute(ocfScript):
             route2=...
             '''
         except:
-            self.ocf_log('ocfChangeRoute.initialize: error during reading configfile', msglevel=5)
+            self.ocf_log_raise('ocfChangeRoute.initialize: error during reading configfile')
             raise
         else:
             if self.log_config: self.log_configuration()
@@ -225,10 +230,10 @@ class ocfChangeRoute(ocfScript):
                     self.actions4routes[block].add_routedesc(routedict)
                 else:
                     msg = 'ocfChangeRoute.read_configfile_rules_block: interface {} in route {} (in {}) does not exist'.format(routedict['oif'], routeline, block)
-                    self.ocf_log(msg, msglevel=0)
+                    self.ocf_log_raise(msg)
                     raise ocfError(self.ocfretcodes['OCF_ERR_CONFIGURED'], msg)
             except SyntaxError:
-                self.ocf_log('ocfChangeRoute.read_configfile_rules_block: invalid syntax for {} in {}'.format(routeline, block), msglevel=0)
+                self.ocf_log_raise('ocfChangeRoute.read_configfile_rules_block: invalid syntax for {} in {}'.format(routeline, block))
                 raise
             except configparser.NoOptionError:
                 self.ocf_log('ocfChangeRoute.read_configfile_rules_block: no more routes for {}'.format(block), msglevel=5)
@@ -237,7 +242,7 @@ class ocfChangeRoute(ocfScript):
                 self.ocf_log('ocfChangeRoute.read_configfile_rules_block: no route for {}'.format(block), msglevel=5)
                 break
             except Exception:
-                self.ocf_log('ocfChangeRoute.read_configfile_rules_block: Error during file parsing: {}'.format(sys.exc_info()), msglevel=0)
+                self.ocf_log_raise('ocfChangeRoute.read_configfile_rules_block: Error during file parsing')
                 raise
         
     ########################################
@@ -249,7 +254,7 @@ class ocfChangeRoute(ocfScript):
             else:
                 self.ocf_log_warn('ocfChangeRoute.add_route: route {} must be added but already exists'.format(adddict))
         except Exception: 
-            self.ocf_log('ocfChangeRoute.add_route Error: {}'.format(sys.exc_info()), msglevel=0)
+            self.ocf_log_raise('ocfChangeRoute.add_route Error')
             raise
         
     ########################################
@@ -260,8 +265,8 @@ class ocfChangeRoute(ocfScript):
                 self.ipdb.routes.remove(deldict['dst'])
             else:
                 self.ocf_log_warn('ocfChangeRoute.del_route: route {} must be deleted but does not exist.'.format(deldict['dst']))
-        except Exception: 
-            self.ocf_log('ocfChangeRoute.del_route Error: {}'.format(sys.exc_info()), msglevel=0)
+        except Exception:
+            self.ocf_log_raise('ocfChangeRoute.del_route Error')
             raise
     
     ########################################
@@ -276,7 +281,7 @@ class ocfChangeRoute(ocfScript):
                  self.ocf_log_warn('ocfChangeRoute.modify_route: route {} must be modified but does not exist. Adding missing rule.'.format(modifydict['dst']))
                  self.add_route(modifydict)
         except Exception: 
-            self.ocf_log('ocfChangeRoute.modify_route Error: {}'.format(sys.exc_info()), msglevel=0)
+            self.ocf_log_raise('ocfChangeRoute.modify_route Error')
             raise
 
     ########################################
@@ -345,7 +350,7 @@ class ocfChangeRoute(ocfScript):
                 else:
                     return self.ocfretcodes['OCF_ERR_GENERIC']
         except Exception:
-            self.ocf_log('ocfChangeRoute.routes_status: {}'.format(sys.exc_info()))
+            self.ocf_log_raise('ocfChangeRoute.routes_status')
             raise
         
 
@@ -389,7 +394,7 @@ class ocfChangeRoute(ocfScript):
             self.initialize()
             return self.status()
         except Exception:
-            self.ocf_log('ocfChangeRoute.monitor: error during monitor: {}'.format(sys.exc_info()))
+            self.ocf_log_raise('ocfChangeRoute.monitor: error during monitor')
             return self.ocfretcodes['OCF_ERR_GENERIC']
     
     ########################################
@@ -403,7 +408,7 @@ class ocfChangeRoute(ocfScript):
                 for routedef in self.get_routes(action):
                     if self.actions4routes[action].function4start:
                         self.actions4routes[action].function4start(routedef)
-            self.ocf_log('ocfChangeRoute.stop: commiting routes change', msglevel=5)
+            self.ocf_log('ocfChangeRoute.start: commiting routes change', msglevel=5)
             self.ipdb_commit_and_reload()
             self.ocf_log('ocfChangeRoute.start: waiting {} seconds...'.format(self.get_option('sleepafterstart')), msglevel=3)
             time.sleep(self.get_option('sleepafterstart'))
@@ -414,7 +419,7 @@ class ocfChangeRoute(ocfScript):
                     self.clean_rules_on_error()
                 return status
         except Exception:
-            self.ocf_log('ocfChangeRoute.start: error during start: {}'.format(sys.exc_info()))
+            self.ocf_log_raise('ocfChangeRoute.start: error during start')
             if self.clean_on_error:
                     self.clean_rules_on_error()
             return self.ocfretcodes['OCF_ERR_GENERIC']
@@ -445,7 +450,7 @@ class ocfChangeRoute(ocfScript):
                     self.clean_rules_on_error()
                 return status
         except Exception:
-            self.ocf_log('ocfChangeRoute.stop: error during stop: {}'.format(sys.exc_info()))
+            self.ocf_log_raise('ocfChangeRoute.stop: error during stop')
             if self.clean_on_error:
                     self.clean_rules_on_error()
             return self.ocfretcodes['OCF_ERR_GENERIC']

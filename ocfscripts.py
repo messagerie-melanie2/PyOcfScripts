@@ -24,7 +24,7 @@ ocf script function for corosync python
 nécessite l'installation des module python-psutil
 """
 
-import os, psutil, syslog, locale, subprocess, pwd, grp, time, stat, signal, socket, resource
+import os, psutil, syslog, locale, subprocess, pwd, grp, time, stat, signal, socket, resource, traceback, sys
 from ocfreturncodes import ocfReturnCodes
 
 ################################################################################
@@ -260,6 +260,13 @@ class ocfScript(ocfReturnCodes):
         kill9_is_ra_opt=True, \
         kill9_is_required=0, \
         kill9_is_unique=0, \
+        # kill 9 all fork
+        default_kill9_all_fork=False, \
+        kill9_all_forksd="When using SIGKILL, killing all forked sons before killing process", \
+        kill9_all_forkld="When using SIGKILL, killing all forked sons before killing process", \
+        kill9_all_fork_is_ra_opt=False, \
+        kill9_all_fork_is_required=0, \
+        kill9_all_fork_is_unique=0, \
         # ratio kill 15
         default_kill15_ratio=0.65, \
         kill15_ratiosd='ratio for the kill 15 (SIGTERM) to split the stop timeout.', \
@@ -268,14 +275,14 @@ class ocfScript(ocfReturnCodes):
         kill15_ratio_is_required=0, \
         kill15_ratio_is_unique=0, \
         # ratio kill 3
-        default_kill3_ratio=0.2, \
+        default_kill3_ratio=0.15, \
         kill3_ratiosd='ratio for the kill 3 (SIGQUIT) to split the stop timeout.', \
         kill3_ratiold='ratio for the kill 3 (SIGQUIT) to split the stop timeout. The value is between 0 and 1. The total kill15_ratios + kill3_ratio + kill9_ratio must be less than or equal to one. It is better to leave some time for the script at the end of the timeout to finish its execution keeping a total less than one.', \
         kill3_ratio_is_ra_opt=True, \
         kill3_ratio_is_required=0, \
         kill3_ratio_is_unique=0, \
         # ration kill 9
-        default_kill9_ratio=0.05, \
+        default_kill9_ratio=0.1, \
         kill9_ratiosd='ratio for the kill 9 (SIGKILL) to split the stop timeout.', \
         kill9_ratiold='ratio for the kill 9 (SIGKILL) to split the stop timeout. The value is between 0 and 1. The total kill15_ratios + kill3_ratio + kill9_ratio must be less than or equal to one. It is better to leave some time for the script at the end of the timeout to finish its execution keeping a total less than one.', \
         kill9_ratio_is_ra_opt=True, \
@@ -378,7 +385,43 @@ class ocfScript(ocfReturnCodes):
         status_check_pidfileld='Control if the pid in pidfile is the same as the pid found in the process list.\nIf it is different, the process has been relaunched: there has been a problem, the state of the process potentially unknown.\nValues are True, False, All, None or a combination of start, stop, and monitor separated by commas.', \
         status_check_pidfile_is_ra_opt=False, \
         status_check_pidfile_is_required=0, \
-        status_check_pidfile_is_unique=0 ):
+        status_check_pidfile_is_unique=0,
+        # status_socket
+        default_status_socket=None, \
+        status_socketsd='path to a status socket.', \
+        status_socketld='path to a status socket. This socket received status information from a program who is doing monitoring that can not be done by the cluster program (for example monitoring load average during several minutes).\n The format is :\nstatus_socket=LIST_SOCKETS\nLIST_DIRS=socket path;socket path;...', \
+        status_socket_is_ra_opt=False, \
+        status_socket_is_required=0, \
+        status_socket_is_unique=0, \
+        # default_status_socket_return
+        default_default_status_socket_return=True, \
+        default_status_socket_returnsd='Value return by status_socket if a problem occure during reading socket', \
+        default_status_socket_returnld='Value return by status_socket if a problem occure during reading socket. With True, the status will not fail if a probleme occure during reading socket. With False, the status will fail.', \
+        default_status_socket_return_is_ra_opt=False, \
+        default_status_socket_return_is_required=0, \
+        default_status_socket_return_is_unique=0, \
+        # status_socket_timeout
+        default_status_socket_timeout=5.0, \
+        status_socket_timeoutsd='timeout for status socket.', \
+        status_socket_timeoutld='timeout for status socket.', \
+        status_socket_timeout_is_ra_opt=False, \
+        status_socket_timeout_is_required=0, \
+        status_socket_timeout_is_unique=0, \
+        # status_socket_obsolete_data
+        default_status_socket_obsolete_data=150, \
+        status_socket_obsolete_datasd='time in seconds after which data sent in status socket are obsolete.', \
+        status_socket_obsolete_datald='time in seconds after which data sent in status socket are obsolete.', \
+        status_socket_obsolete_data_is_ra_opt=False, \
+        status_socket_obsolete_data_is_required=0, \
+        status_socket_obsolete_data_is_unique=0, \
+        # status_socket_need_all_on_error
+        default_status_socket_need_all_on_error=False, \
+        status_socket_need_all_on_errorsd='If true, all status_socket must be in error to declare the status in error.', \
+        status_socket_need_all_on_errorld='If true, all status_socket must be in error to declare the status in error. If false, a socket in error allows to declare the status in error.', \
+        status_socket_need_all_on_error_is_ra_opt=False, \
+        status_socket_need_all_on_error_is_required=0, \
+        status_socket_need_all_on_error_is_unique=0):
+        # whew ! End of declration of init function !
         super(ocfScript,self).__init__()
         syslog.openlog(logoption=syslog.LOG_PID, facility=logfacility)
         self.metadata = ocfMeta(resname, longdesc, shortdesc, version, ldlang, sdlang)
@@ -493,6 +536,14 @@ class ocfScript(ocfReturnCodes):
                 required=kill9_is_required, \
                 unique=kill9_is_unique, \
                 default=default_kill9, \
+                convertfct=self.convert_to_bool)
+            self.init_option('kill9_all_fork', \
+                kill9_all_fork_is_ra_opt, \
+                kill9_all_forkld, \
+                kill9_all_forksd, \
+                required=kill9_all_fork_is_required, \
+                unique=kill9_all_fork_is_unique, \
+                default=default_kill9_all_fork, \
                 convertfct=self.convert_to_bool)
             self.init_option('kill15_ratio', \
                 kill15_ratio_is_ra_opt, \
@@ -618,6 +669,45 @@ class ocfScript(ocfReturnCodes):
                 required=status_check_pidfile_is_required, \
                 unique=status_check_pidfile_is_unique, \
                 default=default_status_check_pidfile)
+            self.init_option('status_socket', \
+                status_socket_is_ra_opt, \
+                status_socketld, \
+                status_socketsd, \
+                required=status_socket_is_required, \
+                unique=status_socket_is_unique, \
+                default=default_status_socket)
+            self.init_option('default_status_socket_return', \
+                default_status_socket_return_is_ra_opt, \
+                default_status_socket_returnld, \
+                default_status_socket_returnsd, \
+                required=default_status_socket_return_is_required, \
+                unique=default_status_socket_return_is_unique, \
+                default=default_default_status_socket_return, \
+                convertfct=self.convert_to_bool)
+            self.init_option('status_socket_timeout', \
+                status_socket_timeout_is_ra_opt, \
+                status_socket_timeoutld, \
+                status_socket_timeoutsd, \
+                required=status_socket_timeout_is_required, \
+                unique=status_socket_timeout_is_unique, \
+                default=default_status_socket_timeout, \
+                convertfct=self.convert_to_float)
+            self.init_option('status_socket_obsolete_data', \
+                status_socket_obsolete_data_is_ra_opt,\
+                status_socket_obsolete_datald, \
+                status_socket_obsolete_datasd, \
+                required=status_socket_obsolete_data_is_required, \
+                unique=status_socket_obsolete_data_is_unique, \
+                default=default_status_socket_obsolete_data, \
+                convertfct=self.convert_to_int)
+            self.init_option('status_socket_need_all_on_error', \
+                status_socket_need_all_on_error_is_ra_opt, \
+                status_socket_need_all_on_errorld, \
+                status_socket_need_all_on_errorsd, \
+                required=status_socket_need_all_on_error_is_required, \
+                unique=status_socket_need_all_on_error_is_unique, \
+                default=default_status_socket_need_all_on_error, \
+                convertfct=self.convert_to_bool)
             self.init_special_start_stop_mon_options('status_check_ppid', \
                 {'start':'status_check_ppid_for_start', 'stop':'status_check_ppid_for_stop', 'monitor':'status_check_ppid_for_monitor'})
             self.init_special_start_stop_mon_options('status_check_pidfile', \
@@ -654,6 +744,18 @@ class ocfScript(ocfReturnCodes):
     ########################################
     def ocf_log_err(self, msg):
         self.ocf_log(msg, msglevel=0, sysloglvl=syslog.LOG_ERR)
+    
+    ########################################
+    def ocf_log_raise(self, msg):
+        if self.get_option('loglevel') == 5:
+            count = 1
+            tb = traceback.format_exception(*sys.exc_info())
+            nb = len(tb)
+            for x in tb:
+                self.ocf_log_err('{} {}/{}: {}'.format(msg, count, nb, x))
+                count += 1
+        else:
+            self.ocf_log_err('{}: {}'.format(msg, sys.exc_info()))
     
     ########################################
     def set_defaults(self, arg):
@@ -1302,22 +1404,37 @@ class ocfScript(ocfReturnCodes):
         return self.status_error('ocfScript.status unexpected case')
     
     ########################################
-    def status_start(self, clean_dirty_pidfile=False, with_status_inherit=True):
+    def status_start(self, clean_dirty_pidfile=False, with_status_inherit=True, run_status_socket=False):
         self.ocf_log('ocfScript.status_start with clean_dirty_pidfile={} and with_status_inherit={}'.format(clean_dirty_pidfile, with_status_inherit), msglevel=5)
         statusfct = self.status if with_status_inherit else super(self.__class__, self).status
-        return statusfct(clean_dirty_pidfile=clean_dirty_pidfile, check_pidfile=self.get_option('status_check_pidfile_for_start'), check_ppid=self.get_option('status_check_ppid_for_start'))
+        sret = statusfct(clean_dirty_pidfile=clean_dirty_pidfile, check_pidfile=self.get_option('status_check_pidfile_for_start'), check_ppid=self.get_option('status_check_ppid_for_start'))
+        if run_status_socket and sret in [self.ocfretcodes['OCF_SUCCESS'], self.ocfretcodes['OCF_RUNNING_MASTER']] and self.get_option('status_socket'):
+            self.ocf_log('ocfScript.status_start status_socket', msglevel=4)
+            if not self.read_all_status_sockets(self.get_option('status_socket'), default_return=self.get_option('default_status_socket_return'), stimeout=self.get_option('status_socket_timeout'), need_all_false=self.get_option('status_socket_need_all_on_error'), obsolete_data=self.get_option('status_socket_obsolete_data')):
+                return self.status_error('ocfScript.status_start, status sockets return a failed state.')
+        return sret
     
     ########################################
-    def status_stop(self, clean_dirty_pidfile=False, with_status_inherit=True):
+    def status_stop(self, clean_dirty_pidfile=False, with_status_inherit=True, run_status_socket=False):
         self.ocf_log('ocfScript.status_stop with clean_dirty_pidfile={} and with_status_inherit={}'.format(clean_dirty_pidfile, with_status_inherit), msglevel=5)
         statusfct = self.status if with_status_inherit else super(self.__class__, self).status
-        return statusfct(clean_dirty_pidfile=clean_dirty_pidfile, check_pidfile=self.get_option('status_check_pidfile_for_stop'), check_ppid=self.get_option('status_check_ppid_for_stop'))
+        sret = statusfct(clean_dirty_pidfile=clean_dirty_pidfile, check_pidfile=self.get_option('status_check_pidfile_for_stop'), check_ppid=self.get_option('status_check_ppid_for_stop'))
+        if run_status_socket and sret == self.ocfretcodes['OCF_NOT_RUNNING'] and self.get_option('status_socket'):
+            self.ocf_log('ocfScript.status_stop status_socket', msglevel=4)
+            if not self.read_all_status_sockets(self.get_option('status_socket'), default_return=self.get_option('default_status_socket_return'), stimeout=self.get_option('status_socket_timeout'), need_all_false=self.get_option('status_socket_need_all_on_error'), obsolete_data=self.get_option('status_socket_obsolete_data')):
+                return self.status_error('ocfScript.status_stop, status sockets return a failed state.')
+        return sret
     
     ########################################
-    def status_monitor(self, clean_dirty_pidfile=False, with_status_inherit=True):
+    def status_monitor(self, clean_dirty_pidfile=False, with_status_inherit=True, run_status_socket=True):
         self.ocf_log('ocfScript.status_monitor with clean_dirty_pidfile={} and with_status_inherit={}'.format(clean_dirty_pidfile, with_status_inherit), msglevel=5)
         statusfct = self.status if with_status_inherit else super(self.__class__, self).status
-        return statusfct(clean_dirty_pidfile=clean_dirty_pidfile, check_pidfile=self.get_option('status_check_pidfile_for_monitor'), check_ppid=self.get_option('status_check_ppid_for_monitor'))
+        sret = statusfct(clean_dirty_pidfile=clean_dirty_pidfile, check_pidfile=self.get_option('status_check_pidfile_for_monitor'), check_ppid=self.get_option('status_check_ppid_for_monitor'))
+        if run_status_socket and sret in [self.ocfretcodes['OCF_SUCCESS'], self.ocfretcodes['OCF_RUNNING_MASTER']] and self.get_option('status_socket'):
+            self.ocf_log('ocfScript.status_monitor status_socket', msglevel=4)
+            if not self.read_all_status_sockets(self.get_option('status_socket'), default_return=self.get_option('default_status_socket_return'), stimeout=self.get_option('status_socket_timeout'), need_all_false=self.get_option('status_socket_need_all_on_error'), obsolete_data=self.get_option('status_socket_obsolete_data')):
+                return self.status_error('ocfScript.status_monitor, status sockets return a failed state.')
+        return sret
     
     ########################################
     def is_process_just_start(self, start_delay, check_ppid=True):
@@ -1364,7 +1481,7 @@ class ocfScript(ocfReturnCodes):
             sock.connect(spath)
             sock.settimeout(stimeout)
         except socket.error as msg:
-            self.ocf_log_err('read_satuts_socket {}: {}'.format(spath, msg))
+            self.ocf_log('read_satuts_socket {}: {}'.format(spath, msg), msglevel=1)
         else:
             msg='status'
             self.ocf_log('ocfScript.read_satuts_socket {}, sending message \"{}\"'.format(spath, msg), msglevel=4)
@@ -1620,6 +1737,23 @@ class ocfScript(ocfReturnCodes):
                 raise
 
     ########################################
+    def kill_all_fork(self, sig):
+        self.ocf_log('ocfScript.kill_all_fork with kill{}'.format(sig), msglevel=5)
+        pids = self.get_first_pids(check_ppid=self.get_option('status_check_ppid_for_stop'))
+        if pids:
+            for proc in psutil.process_iter():
+                try:
+                    if proc.ppid() in pids and psutil.pid_exists(proc.pid):
+                        self.ocf_log('ocfScript.kill_all_fork killing pid {} with kill{}'.format(proc.pid,sig), msglevel=4)
+                        os.kill(proc.pid, sig)
+                except psutil.NoSuchProcess as err:
+                    self.ocf_log_raise('ocfScript.kill_all_fork exception: {}'.format(err))
+                except:
+                    self.ocf_log_raise('ocfScript.stop_sig : self.kill_all_fork error')
+        else:
+            self.ocf_log_warn( 'Can not get process pid to kill all forked process')
+
+    ########################################
     def stop_sig(self, sig, statusfct, timeout_ratio, sleep_after_sig, force_timeout=None):
         '''stop with kill sig'''
         self.ocf_log('ocfScript.stop_sig : kill{} step'.format(sig), msglevel=5)
@@ -1632,7 +1766,11 @@ class ocfScript(ocfReturnCodes):
             # which meens kill_ratio/1000
             stop_timeout = self.calc_timeout(ratio=timeout_ratio/1000, default_timeout=240)
             stop_loop_timeout = stop_timeout - sleep_after_sig
-        self.ocf_log('ocfScript.stop_sig : kill{} step, stop timeout is {}'.format(sig, stop_timeout), msglevel=4)
+        if stop_loop_timeout > 0:
+            self.ocf_log('ocfScript.stop_sig : kill{} step, stop timeout is {}'.format(sig, stop_timeout), msglevel=4)
+        else:
+            self.ocf_log_warn('ocfScript.stop_sig : kill{} step, problem with timeout and timeot ratio : not enough time to stop'.format(sig))
+            stop_loop_timeout = 1
         
         # Use directly get_first_pids which will be the good pid
         pids = self.get_first_pids(check_ppid=self.get_option('status_check_ppid_for_stop'))
@@ -1718,6 +1856,8 @@ class ocfScript(ocfReturnCodes):
                     if self.get_option('kill9'):
                         self.ocf_log_warn('Failed to stop with SIGQUIT (kill -3), using SIGKILL (kill -9)')
                         try:
+                            if self.get_option('kill9_all_fork'):
+                                self.kill_all_fork(signal.SIGKILL)
                             self.stop_sig(signal.SIGKILL, statusfct, self.get_option('kill9_ratio'), self.get_option('sleepaftersigkill'))
                         except:
                             self.ocf_log_err('Error during SIGKILL')
@@ -1995,6 +2135,8 @@ class ocfScript(ocfReturnCodes):
             self.validate_opt_bool('kill3')
             # kill9 first part
             self.validate_opt_bool('kill9')
+            # kill9_all_fork
+            self.validate_opt_bool('kill9_all_fork')
             # kill*_ratio
             self.validate_kill_ratio()
             # monitor_clean_dirty_pidfile
@@ -2009,6 +2151,14 @@ class ocfScript(ocfReturnCodes):
             self.fixdirs(fix=False)
             # process_file_ulimit
             self.validate_opt_number('process_file_ulimit', min=1024)
+            # default_status_socket_return
+            self.validate_opt_bool('default_status_socket_return')
+            # status_socket_timeout
+            self.validate_opt_number('status_socket_timeout', nbrtype=float, min=1.0)
+            # status_socket_obsolete_data
+            self.validate_opt_number('status_socket_obsolete_data', min=1)
+            # status_socket_need_all_on_error
+            self.validate_opt_bool('status_socket_need_all_on_error')
         except:
             raise
         else:

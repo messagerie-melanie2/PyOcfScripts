@@ -40,7 +40,8 @@ class ocfCyrusMupdate(ocfScript):
                 '/usr/sbin/cyrmaster', \
                 '/var/run/cyrmaster.pid', \
                 msfileld='file that active/unactivate cyrus is in master or slave mode (for mupdate)\n/var/run/heartbeat/cyrus.master could be a good choice.', \
-                default_binfileoptions='-d', \
+                default_binfileoptions='-d -p /var/run/cyrmaster.pid', \
+                default_ocf_write_pidfile=False, \
                 msfile_is_ra_opt=True, \
                 default_kill9=True, \
                 maxnbprocess_is_ra_opt=False, \
@@ -48,6 +49,11 @@ class ocfCyrusMupdate(ocfScript):
                 piddir_group_is_ra_opt=False, \
                 piddir_mod_is_ra_opt=False, \
                 commande_line_searched_is_ra_opt=False, \
+                status_socket_is_ra_opt=True, \
+                default_status_socket_return_is_ra_opt=True, \
+                status_socket_timeout_is_ra_opt=True, \
+                status_socket_obsolete_data_is_ra_opt=True, \
+                status_socket_need_all_on_error_is_ra_opt=True, \
                 autoaction=False)
         except:
             raise
@@ -100,10 +106,14 @@ class ocfCyrusMupdate(ocfScript):
                 #sys.stdout.write(re.sub(pattern, replacestr, line))
             pass # TODO shutil.copy
             if conf_master:
+                self.ocf_log('ocfCyrusMupdate.reconfigure_mupdate : copying {}'.format(self.get_option('master_cyrus_conf_path')), msglevel=5)
                 shutil.copy(self.get_option('master_cyrus_conf_path'), self.get_option('cyrus_conf_path'))
+                self.ocf_log('ocfCyrusMupdate.reconfigure_mupdate : copying {}'.format(self.get_option('master_imapd_conf_path')), msglevel=5)
                 shutil.copy(self.get_option('master_imapd_conf_path'), self.get_option('imapd_conf_path'))
             else:
+                self.ocf_log('ocfCyrusMupdate.reconfigure_mupdate : copying {}'.format(self.get_option('slave_cyrus_conf_path')), msglevel=5)
                 shutil.copy(self.get_option('slave_cyrus_conf_path'), self.get_option('cyrus_conf_path'))
+                self.ocf_log('ocfCyrusMupdate.reconfigure_mupdate : copying {}'.format(self.get_option('slave_imapd_conf_path')), msglevel=5)
                 shutil.copy(self.get_option('slave_imapd_conf_path'), self.get_option('imapd_conf_path'))
         except:
             self.ocf_log('ocfCyrusMupdate.reconfigure_mupdate: {}'.format(sys.exc_info()), msglevel=0)

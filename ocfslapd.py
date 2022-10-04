@@ -59,6 +59,11 @@ class ocfSlapd(ocfScript):
                 default_process_file_ulimit=10000, \
                 process_file_ulimitsd='ulimit open file for slapd', \
                 process_file_ulimitld='ulimit open file for slapd. minimum is 1024.', \
+                status_socket_is_ra_opt=True, \
+                default_status_socket_return_is_ra_opt=True, \
+                status_socket_timeout_is_ra_opt=True, \
+                status_socket_obsolete_data_is_ra_opt=True, \
+                status_socket_need_all_on_error_is_ra_opt=True, \
                 autoaction=False)
         except:
             raise
@@ -157,29 +162,6 @@ class ocfSlapd(ocfScript):
             'check if an object was found by the request. In other word, if startlr_checkreturn is true and no value was found the request is considered as failed. default=true', \
             'check if an object was found by the request.', \
             default=True, \
-            convertfct=self.convert_to_bool)
-        self.init_from_env('status_socket', \
-            'path to a status socket. This socket received status information from a program who is doing monitoring that can not be done by the cluster program (for example monitoring load average during several minutes).\n The format is :\nstatus_socket=LIST_SOCKETS\nLIST_DIRS=socket path;socket path;...', \
-            'path to a status socket.')
-        self.init_from_env('default_status_socket_return', \
-            'Value return by status_socket if a problem occure during reading socket. With True, the status will not fail if a probleme occure during reading socket. With False, the status will fail.', \
-            'Value return by status_socket if a problem occure during reading socket', \
-            default=True, \
-            convertfct=self.convert_to_bool)
-        self.init_from_env('status_socket_timeout', \
-            'timeout for status socket.', \
-            'timeout for status socket.', \
-            default= 5.0, \
-            convertfct=self.convert_to_float)
-        self.init_from_env('status_socket_obsolete_data', \
-            'time in seconds after which data sent in status socket are obsolete.', \
-            'time in seconds after which data sent in status socket are obsolete.', \
-            default=150, \
-            convertfct=self.convert_to_int)
-        self.init_from_env('status_socket_need_all_on_error', \
-            'If true, all status_socket must be in error to declare the status in error. If false, a socket in error allows to declare the status in error.', \
-            'If true, all status_socket must be in error to declare the status in error.', \
-            default=False, \
             convertfct=self.convert_to_bool)
         self.init_from_env('suspend_advanced_mon_socket', \
             'path to a suspend advanced monitoring socket. This socket received suspend advanced monitoring information from a program who want to do some actions not compatible with advanced monitoring actions (search, replication, ...) (for examples : config update, massive ldap update).\n The format is :\nstatus_socket=socket path.', \
@@ -596,9 +578,9 @@ class ocfSlapd(ocfScript):
         return self.ocfretcodes['OCF_SUCCESS']
 
     ########################################
-    def status_start(self, clean_dirty_pidfile=False, with_status_inherit=True):
+    def status_start(self, clean_dirty_pidfile=False, with_status_inherit=True, run_status_socket=False):
         self.ocf_log('ocfSlapd.status_start with clean_dirty_pidfile={}'.format(clean_dirty_pidfile), msglevel=5)
-        sret = super(ocfSlapd, self).status_start(clean_dirty_pidfile=clean_dirty_pidfile)
+        sret = super(ocfSlapd, self).status_start(clean_dirty_pidfile=clean_dirty_pidfile, run_status_socket=run_status_socket)
         if (sret == self.ocfretcodes['OCF_SUCCESS'] or sret == self.ocfretcodes['OCF_RUNNING_MASTER']) and self.get_option('start_ldaprequest'):
             try:
                 ipjs = self.is_process_just_start(self.get_option('startlr_end'), check_ppid=self.get_option('status_check_ppid_for_start'))
@@ -619,9 +601,9 @@ class ocfSlapd(ocfScript):
         return sret
     
     ########################################
-    def status_stop(self, clean_dirty_pidfile=False, with_status_inherit=True):
+    def status_stop(self, clean_dirty_pidfile=False, with_status_inherit=True, run_status_socket=False):
         self.ocf_log('ocfSlapd.status_stop with clean_dirty_pidfile={}'.format(clean_dirty_pidfile), msglevel=5)
-        sret = super(ocfSlapd, self).status_stop(clean_dirty_pidfile=clean_dirty_pidfile)
+        sret = super(ocfSlapd, self).status_stop(clean_dirty_pidfile=clean_dirty_pidfile, run_status_socket=run_status_socket)
         if (sret == self.ocfretcodes['OCF_SUCCESS'] or sret == self.ocfretcodes['OCF_RUNNING_MASTER']) and self.get_option('cpu_dead_lock_workaround') and self.get_option('mon_ldaprequest'):
             # Only one iteration to check if slapd answers or not
             self.ocf_log('ocfSlapd.status_stop ldap request for cpu_dead_lock_workaround', msglevel=3)
@@ -634,9 +616,9 @@ class ocfSlapd(ocfScript):
         return sret
     
     ########################################
-    def status_monitor(self, clean_dirty_pidfile=False, with_status_inherit=True):
+    def status_monitor(self, clean_dirty_pidfile=False, with_status_inherit=True, run_status_socket=False):
         self.ocf_log('ocfSlapd.status_monitor with clean_dirty_pidfile={}'.format(clean_dirty_pidfile), msglevel=5)
-        sret = super(ocfSlapd, self).status_monitor(clean_dirty_pidfile=clean_dirty_pidfile)
+        sret = super(ocfSlapd, self).status_monitor(clean_dirty_pidfile=clean_dirty_pidfile, run_status_socket=run_status_socket)
         if (sret == self.ocfretcodes['OCF_SUCCESS'] or sret == self.ocfretcodes['OCF_RUNNING_MASTER']) and self.get_option('mon_ldaprequest'):
             suspend_advanced_mon = self.read_suspend_advanced_mon()
             if 'search' in suspend_advanced_mon:
@@ -787,11 +769,6 @@ class ocfSlapd(ocfScript):
             self.validate_opt_number('monlr_wait', min=0)
             self.validate_opt_bool('monlr_checkreturn')
             self.validate_read_access(self.get_option('slapdconf'), self.get_option('slapd_user'), self.get_option('slapd_group'))
-            # TODO status_socket
-            self.validate_opt_bool('default_status_socket_return')
-            self.validate_opt_number('status_socket_timeout', nbrtype=float, min=1.0)
-            self.validate_opt_number('status_socket_obsolete_data', min=1)
-            self.validate_opt_bool('status_socket_need_all_on_error')
             # TODO suspend_advanced_mon_socket
             self.validate_opt_number('suspend_advanced_mon_socket_timeout', nbrtype=float, min=1.0)
             self.validate_opt_number('suspend_advanced_mon_socket_obsolete_data', min=1)
@@ -807,7 +784,6 @@ class ocfSlapd(ocfScript):
             self.validate_opt_number('cdlw_wait', nbrtype=float, min=0.1, max=1.0)
             self.validate_opt_number('cdlw_number_of_values_too_close', min=1)
             self.validate_opt_number('cdlw_min_cpu_average', min=100)
-            
         except ocfError as oe:
             self.ocf_log_err('Error during validate: {}'.format(oe.strerr))
             ret = oe.err
